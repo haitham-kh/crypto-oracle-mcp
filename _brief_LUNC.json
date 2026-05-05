@@ -1,0 +1,439 @@
+{
+  "success": true,
+  "tool": "oracle_intelligence_brief",
+  "symbol": "LUNC",
+  "timestamp": 1777984399,
+  "data": {
+    "symbol": "LUNC",
+    "name": "Terra Luna Classic",
+    "signal": "WEAK_BUY",
+    "final_score": 20.22,
+    "regime": "TRENDING",
+    "ev_24h_pct": 1.92,
+    "data_completeness_pct": 100.0,
+    "analysis": {
+      "symbol": "LUNC",
+      "name": "Terra Luna Classic",
+      "current_price": 0.00010002,
+      "price_sources": {
+        "binance": 9.984e-05,
+        "mexc": 9.983e-05,
+        "coingecko": 0.0001004,
+        "spread_pct": 0.5699
+      },
+      "data_completeness_pct": 100.0,
+      "missing_sections": [],
+      "regime": {
+        "regime": "TRENDING",
+        "reason": "ADX 61.3 on 4H/1D confirms directional trend \u2014 momentum tools are primary.",
+        "multiplier": 1.0,
+        "adx_4h": 61.3326497,
+        "adx_1d": 60.34239558,
+        "atr_pct_4h": 5.7681,
+        "bb_squeeze_4h": false,
+        "bb_bandwidth_4h": 34.12865909
+      },
+      "mtf": {
+        "per_tf": {
+          "1d": {
+            "score": 45.0,
+            "contributions": [
+              [
+                "Price > EMA200",
+                20.0
+              ],
+              [
+                "Golden cross",
+                15.0
+              ],
+              [
+                "Ichimoku price>cloud (green)",
+                10.0
+              ],
+              [
+                "TK cross bullish",
+                8.0
+              ],
+              [
+                "ADX>25 DI+>DI-",
+                6.0
+              ],
+              [
+                "RSI overbought",
+                -10.0
+              ],
+              [
+                "MACD above zero",
+                8
+              ],
+              [
+                "CMF strong inflow",
+                8
+              ],
+              [
+                "MFI extreme",
+                -6
+              ],
+              [
+                "Price > VWAP",
+                6
+              ],
+              [
+                "RSI bear divergence",
+                -20
+              ]
+            ],
+            "available": true,
+            "rsi": 77.75333334,
+            "macd_crossover": "none",
+            "bb_percent_b": 0.98980507,
+            "volume_vs_avg": 0.77,
+            "trend_direction": "bullish",
+            "rsi_divergence": "bearish"
+          },
+          "4h": {
+            "score": 70.0,
+            "contributions": [
+              [
+                "Price > EMA200",
+                20.0
+              ],
+              [
+                "Golden cross",
+                15.0
+              ],
+              [
+                "Ichimoku price>cloud (green)",
+                10.0
+              ],
+              [
+                "TK cross bullish",
+                8.0
+              ],
+              [
+                "ADX>25 DI+>DI-",
+                6.0
+              ],
+              [
+                "MACD above zero",
+                8
+              ],
+              [
+                "CMF strong inflow",
+                8
+              ],
+              [
+                "MFI extreme",
+                -6
+              ],
+              [
+                "CCI exhaustion",
+                -5
+              ],
+              [
+                "Price > VWAP",
+                6
+              ]
+            ],
+            "available": true,
+            "rsi": 68.51477881,
+            "macd_crossover": "none",
+            "bb_percent_b": 0.82558353,
+            "volume_vs_avg": 0.07,
+            "trend_direction": "bullish",
+            "rsi_divergence": "none"
+          },
+          "1h": {
+            "score": 96.0,
+            "contributions": [
+              [
+                "Price > EMA200",
+                20.0
+              ],
+              [
+                "Golden cross",
+                15.0
+              ],
+              [
+                "Ichimoku price>cloud (green)",
+                10.0
+              ],
+              [
+                "TK cross bullish",
+                8.0
+              ],
+              [
+                "ADX>25 DI+>DI-",
+                6.0
+              ],
+              [
+                "RSI 40-60 healthy",
+                15.0
+              ],
+              [
+                "MACD above zero",
+                8
+              ],
+              [
+                "CMF strong inflow",
+                8
+              ],
+              [
+                "Price > VWAP",
+                6
+              ]
+            ],
+            "available": true,
+            "rsi": 55.94214265,
+            "macd_crossover": "none",
+            "bb_percent_b": 0.48574612,
+            "volume_vs_avg": 0.29,
+            "trend_direction": "bullish",
+            "rsi_divergence": "none"
+          },
+          "15m": {
+            "score": 66.0,
+            "contributions": [
+              [
+                "Price > EMA200",
+                20.0
+              ],
+              [
+                "Golden cross",
+                15.0
+              ],
+              [
+                "Ichimoku price>cloud (green)",
+                10.0
+              ],
+              [
+                "TK cross bearish",
+                -8.0
+              ],
+              [
+                "RSI 40-60 healthy",
+                15.0
+              ],
+              [
+                "MACD above zero",
+                8
+              ],
+              [
+                "Price > VWAP",
+                6
+              ]
+            ],
+            "available": true,
+            "rsi": 50.72180734,
+            "macd_crossover": "none",
+            "bb_percent_b": 0.45555737,
+            "volume_vs_avg": 0.35,
+            "trend_direction": "bullish",
+            "rsi_divergence": "none"
+          }
+        },
+        "mtf_score": 64.8
+      },
+      "smart_money": {
+        "score": -30,
+        "contributions": [
+          [
+            "Bid wall / long liq cluster just below",
+            -15
+          ],
+          [
+            "Whale sells >70%",
+            -15
+          ]
+        ],
+        "funding_rate_pct": null,
+        "funding_sentiment": null,
+        "open_interest_usdt": null,
+        "long_short_ratio": null,
+        "net_flow_24h": null,
+        "net_flow_interpretation": "data_unavailable",
+        "whale_buy_count": 2.0,
+        "whale_sell_count": 10.0
+      },
+      "pattern": {
+        "score": 0.0,
+        "pattern_name": "none",
+        "pattern_direction": "neutral",
+        "base_confidence_pct": null,
+        "conflicts_with_mtf": false
+      },
+      "macro": {
+        "score": 0,
+        "fear_greed_value": 50.0,
+        "fear_greed_trend": null,
+        "fear_greed_adjustment": 0,
+        "btc_dominance_pct": 58.80210906867536,
+        "btc_dominance_adjustment": 0,
+        "beta_vs_btc": 1.104,
+        "size_haircut_from_beta": 0.0
+      },
+      "sentiment_score": {
+        "score": 18.0,
+        "trending_rank": 6.0,
+        "sentiment_votes_up_pct": 87.67
+      },
+      "composite": {
+        "raw_pre_regime": 20.22,
+        "final_score": 20.22,
+        "signal": "WEAK_BUY",
+        "contributions": {
+          "mtf": 25.92,
+          "smart_money": -7.5,
+          "pattern": 0.0,
+          "sentiment": 1.8,
+          "macro": 0.0
+        }
+      },
+      "scenarios": {
+        "bull": {
+          "prob_pct": 28.3,
+          "target_24h": 0.00010865999999999999,
+          "target_24h_pct": 8.64,
+          "target_7d": 0.00012306,
+          "target_7d_pct": 23.04,
+          "trigger": "Close > 0.00010866 on 4H with volume >150% of 20-period average"
+        },
+        "base": {
+          "prob_pct": 53.0,
+          "range_24h_low": 9.57e-05,
+          "range_24h_high": 0.00010434,
+          "range_7d_low": 8.85e-05,
+          "range_7d_high": 0.00011153999999999999,
+          "trigger": "Structure continuation without catalyst \u2014 oscillation between nearest S/R"
+        },
+        "bear": {
+          "prob_pct": 18.8,
+          "target_24h": 9.724e-05,
+          "target_24h_pct": -2.78,
+          "target_7d": 7.756e-05,
+          "target_7d_pct": -22.46,
+          "trigger": "Close < 0.00009724 on 4H on expanding volume"
+        },
+        "ev_24h_pct": 1.92
+      },
+      "trade_plan": {
+        "direction": "LONG",
+        "setup_quality": "B",
+        "conservative": {
+          "entry_ideal": 9.957e-05,
+          "entry_lower": 9.669e-05,
+          "entry_upper": 0.00010245,
+          "stop_loss": 9.093e-05,
+          "sl_pct": 8.68,
+          "tp1": 0.00011253,
+          "tp1_pct": 13.02,
+          "tp2": 0.00012117,
+          "tp2_pct": 21.69,
+          "tp3": 0.00013413,
+          "tp3_pct": 34.71,
+          "rr_tp1": 1.5,
+          "rr_tp2": 2.5,
+          "rr_tp3": 4.0,
+          "risk_per_unit": 8.64e-06
+        },
+        "moderate": {
+          "entry_ideal": 9.957e-05,
+          "entry_lower": 9.669e-05,
+          "entry_upper": 0.00010245,
+          "stop_loss": 8.805e-05,
+          "sl_pct": 11.57,
+          "tp1": 0.00011685,
+          "tp1_pct": 17.35,
+          "tp2": 0.00012837,
+          "tp2_pct": 28.92,
+          "tp3": 0.00014565,
+          "tp3_pct": 46.28,
+          "rr_tp1": 1.5,
+          "rr_tp2": 2.5,
+          "rr_tp3": 4.0,
+          "risk_per_unit": 1.152e-05
+        },
+        "aggressive": {
+          "entry_ideal": 9.957e-05,
+          "entry_lower": 9.669e-05,
+          "entry_upper": 0.00010245,
+          "stop_loss": 8.517e-05,
+          "sl_pct": 14.46,
+          "tp1": 0.00012117,
+          "tp1_pct": 21.69,
+          "tp2": 0.00013557,
+          "tp2_pct": 36.16,
+          "tp3": 0.00015717,
+          "tp3_pct": 57.85,
+          "rr_tp1": 1.5,
+          "rr_tp2": 2.5,
+          "rr_tp3": 4.0,
+          "risk_per_unit": 1.44e-05
+        },
+        "kelly": {
+          "win_prob": 60.1,
+          "avg_rr": 2.5,
+          "full_kelly_pct": 44.15,
+          "half_kelly_pct": 22.08,
+          "half_kelly_adj_pct": 22.08
+        },
+        "position_size": {
+          "capital_example_usdt": 10000.0,
+          "risk_pct": 1.0,
+          "risk_usdt": 100.0,
+          "position_usdt": 864.32,
+          "pct_of_capital": 8.64,
+          "beta_haircut_applied": false
+        },
+        "invalidation": {
+          "level": 9.093e-05,
+          "timeframe": "4H",
+          "direction": "below"
+        }
+      },
+      "risk_audit": {
+        "funding_crowding": {
+          "status": "CLEAR"
+        },
+        "liquidity": {
+          "status": "CLEAR"
+        },
+        "whale_concentration": {
+          "status": "CLEAR"
+        },
+        "token_unlock": {
+          "status": "CLEAR"
+        },
+        "beta": {
+          "status": "CLEAR"
+        },
+        "mtf_divergence": {
+          "status": "CLEAR"
+        },
+        "volume_confirmation": {
+          "status": "UNCONFIRMED",
+          "detail": "4H volume 0.07x avg \u2014 below average."
+        },
+        "data_completeness": {
+          "status": "FULL"
+        },
+        "overall_risk": "MODERATE"
+      },
+      "narratives": {
+        "wolf": "Book near balance (1.03) \u2014 no side has clear commitment. Visible ask wall at 0.00009994 acts as magnetic resistance above. Bid wall at 0.00009978 is the line the market must hold. Tape prints 80% aggressive sells \u2014 distribution is active. Trade pace accelerating 3.18\u00d7 \u2014 conviction is building.",
+        "insider": "Whales: 2 buy prints vs 10 sell prints in the 24h window.",
+        "verdict": "Regime: TRENDING. Composite score +20.2. A marginal long edge is present \u2014 wait for trigger before committing. 24H expected value +1.92% \u2014 favorable edge. Watch for: volume below average. Trade the plan, respect the invalidation, size for survival."
+      }
+    },
+    "brief_markdown": "# ORACLE INTELLIGENCE BRIEF \u2014 Terra Luna Classic (LUNC)\n**Timestamp:** 2026-05-05T12:33:19Z  \n**Price:** $0.00010002 (Binance: $0.00009984 | MEXC: $0.00009983 | CoinGecko: $0.00010040 | Spread: 0.5699%)  \n**Market Regime:** TRENDING \u2014 ADX 61.3 on 4H/1D confirms directional trend \u2014 momentum tools are primary.  \n**Data Completeness:** 100% | Missing: none\n\n---\n\n## THE WOLF'S READ \u2014 Market Microstructure\n> *Order flow, crowd psychology, price action.*\n\nBook near balance (1.03) \u2014 no side has clear commitment. Visible ask wall at 0.00009994 acts as magnetic resistance above. Bid wall at 0.00009978 is the line the market must hold. Tape prints 80% aggressive sells \u2014 distribution is active. Trade pace accelerating 3.18\u00d7 \u2014 conviction is building.\n\n---\n\n## THE INSIDER'S READ \u2014 Smart Money & Derivatives\n> *What the money is doing, not what it says.*\n\n**Funding Rate:** n/a per period \u2192 n/a \u2192 neutral positioning  \n**OI:** $n/a  \n**Exchange Flow (24h):** data_unavailable (n/a)  \n**Whale Activity:** 2.0 buys / 10.0 sells in 24h  \n**Long/Short Ratio:** n/a\n\nWhales: 2 buy prints vs 10 sell prints in the 24h window.\n\n---\n\n## THE QUANT'S ANALYSIS \u2014 Multi-Timeframe Signal Engine\n\n### Regime: TRENDING\n\n| Timeframe | Trend | RSI | MACD | BB | Volume | Score |\n|---|---|---|---|---|---|---|\n| 1D | bullish | 77.8 overbought | none | upper band | 0.77x | 45.0/100 |\n| 4H | bullish | 68.5 upper | none | upper half | 0.07x | 70.0/100 |\n| 1H | bullish | 55.9 neutral | none | mid | 0.29x | 96.0/100 |\n| 15M | bullish | 50.7 neutral | none | mid | 0.35x | 66.0/100 |\n\n**Weighted MTF Score: +64.80/100**\n\n**Dominant Pattern:** none \u2014 neutral \u2014 Confidence: n/a%  \n**Divergences Detected:** 1d  \n**Ichimoku State (4H):** Price above cloud | Cloud bullish | TK: bullish  \n**ATR (4H):** $0.00000576 (5.77% of price) \u2192 SL for conservative: $0.00009093\n\n---\n\n## COMPOSITE SIGNAL SCORECARD\n\n| Engine | Raw Score | Weight | Contribution |\n|---|---|---|---|\n| MTF Technical | +64.80/100 | 40% | +25.92 |\n| Smart Money (DPI+WFI) | -30.00/100 | 25% | -7.50 |\n| Chart Patterns | +0.00/100 | 15% | +0.00 |\n| Sentiment | +18.00/100 | 10% | +1.80 |\n| Macro Adjustment | +0.00/100 | 10% | +0.00 |\n| **Regime Multiplier** | \u00d71.00 | \u2014 | applied |\n| **FINAL SCORE** | **+20.22/100** | \u2014 | **WEAK BUY** |\n\n---\n\n## KEY PRICE LEVELS\n\n| Level | Price | Type | Method | Strength |\n|---|---|---|---|---|\n| R3 | n/a | Resistance |  |  |\n| R2 | n/a | Resistance |  |  |\n| R1 | n/a | Resistance |  |  |\n| **NOW** | **$0.00010002** | Current | \u2014 | \u2014 |\n| S1 | 0.00009724 | Support | Swing cluster | Med |\n| S2 | 0.00007756 | Support | Swing cluster | Med |\n| S3 | 0.00007197 | Support | Swing cluster | Med |\n| Liquidation Wall (Longs) | $0.00009978 | Danger | Order book | High |\n| Liquidation Wall (Shorts) | $0.00009994 | Magnet | Order book | High |\n\n---\n\n## TRADE EXECUTION PLAN\n\n**Direction:** LONG  \n**Setup Quality:** B  \n**Expected Value (24H):** +1.92% \u2192 favorable edge\n\n| Parameter | Conservative | Moderate | Aggressive |\n|---|---|---|---|\n| Entry Zone | $0.00009669\u2013$0.00010245 | $0.00009669\u2013$0.00010245 | $0.00009957 (market) |\n| Stop Loss | $0.00009093 (+8.68%) | $0.00008805 (+11.57%) | $0.00008517 (+14.46%) |\n| TP1 \u2014 40% | $0.00011253 (+13.02%) | $0.00011685 (+17.35%) | $0.00012117 (+21.69%) |\n| TP2 \u2014 35% | $0.00012117 (+21.69%) | $0.00012837 (+28.92%) | $0.00013557 (+36.16%) |\n| TP3 \u2014 trail 25% | $0.00013413 (+34.71%) | $0.00014565 (+46.28%) | $0.00015717 (+57.85%) |\n| R:R Ratio | 1:1.5 / 1:2.5 / 1:4.0 | 1:1.5 / 1:2.5 / 1:4.0 | 1:1.5 / 1:2.5 / 1:4.0 |\n\n**Kelly Fraction:** Win prob 60.1% | Avg R:R 2.5 \u2192 Full Kelly: 44.15% | Half Kelly (recommended): 22.08%  \n**Position Size ($10k capital, 1% risk):** $864.32 (8.64% of capital)  \n**Invalidation:** Price closes below $0.00009093 on 4H \u2014 exit immediately.\n\n---\n\n## PRICE PREDICTION\n\n| Scenario | Probability | 24H Target | 7D Target | Trigger |\n|---|---|---|---|---|\n| Bull | 28.3% | $0.00010866 (+8.64%) | $0.00012306 (+23.04%) | Close > 0.00010866 on 4H with volume >150% of 20-period average |\n| Base Case | 53.0% | $0.00009570\u2013$0.00010434 | $0.00008850\u2013$0.00011154 | Structure continuation without catalyst \u2014 oscillation between nearest S/R |\n| Bear | 18.8% | $0.00009724 (-2.78%) | $0.00007756 (-22.46%) | Close < 0.00009724 on 4H on expanding volume |\n\n**24H Expected Value: +1.92%** \u2014 favorable edge\n\n---\n\n## RISK AUDIT\n\n- **Funding rate crowding:** CLEAR\n- **Liquidity:** CLEAR\n- **Whale concentration:** CLEAR\n- **Token unlock pressure:** CLEAR\n- **Beta / BTC amplification:** CLEAR\n- **MTF divergence:** CLEAR\n- **Volume confirmation:** UNCONFIRMED \u2014 4H volume 0.07x avg \u2014 below average.\n- **Data completeness:** FULL\n\n**Overall Risk Rating:** MODERATE\n\n---\n\n## ORACLE'S VERDICT\n\nRegime: TRENDING. Composite score +20.2. A marginal long edge is present \u2014 wait for trigger before committing. 24H expected value +1.92% \u2014 favorable edge. Watch for: volume below average. Trade the plan, respect the invalidation, size for survival.\n\n---\n\n*This analysis is generated from quantitative algorithms and market data. It is educational intelligence, not financial advice. Markets are probabilistic, not deterministic. Manage your risk. Size your positions. Never risk capital you cannot afford to lose.*"
+  },
+  "data_quality": {
+    "sources_used": [
+      "binance",
+      "coingecko",
+      "cmc"
+    ],
+    "sources_failed": [],
+    "confidence": "high"
+  }
+}

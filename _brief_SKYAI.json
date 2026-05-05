@@ -1,0 +1,393 @@
+{
+  "success": true,
+  "tool": "oracle_intelligence_brief",
+  "symbol": "SKYAI",
+  "timestamp": 1777982884,
+  "data": {
+    "symbol": "SKYAI",
+    "name": "SkyAI",
+    "signal": "NEUTRAL",
+    "final_score": -0.35,
+    "regime": "CHAOTIC",
+    "ev_24h_pct": 1.93,
+    "data_completeness_pct": 100.0,
+    "analysis": {
+      "symbol": "SKYAI",
+      "name": "SkyAI",
+      "current_price": 0.610098,
+      "price_sources": {
+        "binance": null,
+        "mexc": 0.6182,
+        "coingecko": 0.601996,
+        "spread_pct": 2.656
+      },
+      "data_completeness_pct": 100.0,
+      "missing_sections": [],
+      "regime": {
+        "regime": "CHAOTIC",
+        "reason": "ATR on 4H is 14.28% of price \u2014 volatility well above normal, standard signals unreliable.",
+        "multiplier": 0.5,
+        "adx_4h": 29.47474835,
+        "adx_1d": null,
+        "atr_pct_4h": 14.2794,
+        "bb_squeeze_4h": false,
+        "bb_bandwidth_4h": 87.77240884
+      },
+      "mtf": {
+        "per_tf": {
+          "1d": {
+            "score": 0,
+            "contributions": [],
+            "available": false
+          },
+          "4h": {
+            "score": 9.0,
+            "contributions": [
+              [
+                "Price < EMA200",
+                -20.0
+              ],
+              [
+                "Ichimoku price>cloud (green)",
+                10.0
+              ],
+              [
+                "TK cross bullish",
+                8.0
+              ],
+              [
+                "ADX>25 DI+>DI-",
+                6.0
+              ],
+              [
+                "RSI 40-60 healthy",
+                15.0
+              ],
+              [
+                "MACD above zero",
+                8
+              ],
+              [
+                "CMF strong inflow",
+                8
+              ],
+              [
+                "Price < VWAP",
+                -6
+              ],
+              [
+                "RSI bear divergence",
+                -20
+              ]
+            ],
+            "available": true,
+            "rsi": 59.40321341,
+            "macd_crossover": "none",
+            "bb_percent_b": 0.67512248,
+            "volume_vs_avg": 0.11,
+            "trend_direction": "bullish",
+            "rsi_divergence": "bearish"
+          },
+          "1h": {
+            "score": -17.0,
+            "contributions": [
+              [
+                "Price < EMA200",
+                -20.0
+              ],
+              [
+                "Ichimoku price>cloud (green)",
+                10.0
+              ],
+              [
+                "TK cross bearish",
+                -8.0
+              ],
+              [
+                "RSI 40-60 healthy",
+                15.0
+              ],
+              [
+                "MACD below zero",
+                -8
+              ],
+              [
+                "Price < VWAP",
+                -6
+              ]
+            ],
+            "available": true,
+            "rsi": 51.98338038,
+            "macd_crossover": "none",
+            "bb_percent_b": 0.44002424,
+            "volume_vs_avg": 1.11,
+            "trend_direction": "bullish",
+            "rsi_divergence": "none"
+          },
+          "15m": {
+            "score": 35.0,
+            "contributions": [
+              [
+                "Price > EMA200",
+                20.0
+              ],
+              [
+                "Golden cross",
+                15.0
+              ],
+              [
+                "TK cross bearish",
+                -8.0
+              ],
+              [
+                "ADX>25 DI+>DI-",
+                6.0
+              ],
+              [
+                "MACD below zero",
+                -8
+              ],
+              [
+                "CMF strong inflow",
+                8
+              ],
+              [
+                "Upper BB + RSI>60 + vol rising",
+                -10.0
+              ],
+              [
+                "Price < VWAP",
+                -6
+              ],
+              [
+                "Volume spike up-candle",
+                10
+              ],
+              [
+                "OBV higher highs",
+                8
+              ]
+            ],
+            "available": true,
+            "rsi": 62.56828037,
+            "macd_crossover": "none",
+            "bb_percent_b": 1.1901456,
+            "volume_vs_avg": 2.94,
+            "trend_direction": "bullish",
+            "rsi_divergence": "none"
+          }
+        },
+        "mtf_score": 1.4
+      },
+      "smart_money": {
+        "score": -5,
+        "contributions": [
+          [
+            "Funding >+0.05% (long crowded)",
+            -15
+          ],
+          [
+            "L/S<0.8 squeeze fuel",
+            10
+          ],
+          [
+            "Ask wall / short liq cluster just above",
+            15
+          ],
+          [
+            "Bid wall / long liq cluster just below",
+            -15
+          ]
+        ],
+        "funding_rate_pct": 0.09174,
+        "funding_sentiment": "longs_paying",
+        "open_interest_usdt": 138813700.0,
+        "long_short_ratio": 0.6909,
+        "net_flow_24h": null,
+        "net_flow_interpretation": "data_unavailable",
+        "whale_buy_count": null,
+        "whale_sell_count": null
+      },
+      "pattern": {
+        "score": 0.0,
+        "pattern_name": "none",
+        "pattern_direction": "neutral",
+        "base_confidence_pct": null,
+        "conflicts_with_mtf": false
+      },
+      "macro": {
+        "score": 0,
+        "fear_greed_value": 50.0,
+        "fear_greed_trend": null,
+        "fear_greed_adjustment": 0,
+        "btc_dominance_pct": 58.77227950782491,
+        "btc_dominance_adjustment": 0,
+        "beta_vs_btc": null,
+        "size_haircut_from_beta": 0.0
+      },
+      "sentiment_score": {
+        "score": 0.0,
+        "trending_rank": null,
+        "sentiment_votes_up_pct": null
+      },
+      "composite": {
+        "raw_pre_regime": -0.69,
+        "final_score": -0.35,
+        "signal": "NEUTRAL",
+        "contributions": {
+          "mtf": 0.56,
+          "smart_money": -1.25,
+          "pattern": 0.0,
+          "sentiment": 0.0,
+          "macro": 0.0
+        }
+      },
+      "scenarios": {
+        "bull": {
+          "prob_pct": 22.4,
+          "target_24h": 0.741975405,
+          "target_24h_pct": 21.62,
+          "target_7d": 0.9617710800000001,
+          "target_7d_pct": 57.64,
+          "trigger": "Close > 0.741975 on 4H with volume >150% of 20-period average"
+        },
+        "base": {
+          "prob_pct": 55.0,
+          "range_24h_low": 0.5441592975,
+          "range_24h_high": 0.6760367025,
+          "range_7d_low": 0.43426146,
+          "range_7d_high": 0.7859345400000001,
+          "trigger": "Structure continuation without catalyst \u2014 oscillation between nearest S/R"
+        },
+        "bear": {
+          "prob_pct": 22.6,
+          "target_24h": 0.5313,
+          "target_24h_pct": -12.92,
+          "target_7d": 0.3263,
+          "target_7d_pct": -46.52,
+          "trigger": "Close < 0.531300 on 4H on expanding volume"
+        },
+        "ev_24h_pct": 1.93
+      },
+      "trade_plan": {
+        "direction": "FLAT",
+        "setup_quality": "No Trade",
+        "conservative": {
+          "entry_lower": null,
+          "entry_upper": null,
+          "entry_ideal": null,
+          "stop_loss": null,
+          "sl_pct": null,
+          "tp1": null,
+          "tp1_pct": null,
+          "tp2": null,
+          "tp2_pct": null,
+          "tp3": null,
+          "tp3_pct": null,
+          "rr_tp1": 1.5,
+          "rr_tp2": 2.5,
+          "rr_tp3": 4.0,
+          "risk_per_unit": 0
+        },
+        "moderate": {
+          "entry_lower": null,
+          "entry_upper": null,
+          "entry_ideal": null,
+          "stop_loss": null,
+          "sl_pct": null,
+          "tp1": null,
+          "tp1_pct": null,
+          "tp2": null,
+          "tp2_pct": null,
+          "tp3": null,
+          "tp3_pct": null,
+          "rr_tp1": 1.5,
+          "rr_tp2": 2.5,
+          "rr_tp3": 4.0,
+          "risk_per_unit": 0
+        },
+        "aggressive": {
+          "entry_lower": null,
+          "entry_upper": null,
+          "entry_ideal": null,
+          "stop_loss": null,
+          "sl_pct": null,
+          "tp1": null,
+          "tp1_pct": null,
+          "tp2": null,
+          "tp2_pct": null,
+          "tp3": null,
+          "tp3_pct": null,
+          "rr_tp1": 1.5,
+          "rr_tp2": 2.5,
+          "rr_tp3": 4.0,
+          "risk_per_unit": 0
+        },
+        "kelly": {
+          "win_prob": "n/a",
+          "avg_rr": "n/a",
+          "full_kelly_pct": "n/a",
+          "half_kelly_pct": "n/a",
+          "half_kelly_adj_pct": "n/a"
+        },
+        "position_size": {
+          "capital_example_usdt": 10000.0,
+          "risk_pct": 1.0,
+          "risk_usdt": 100.0,
+          "position_usdt": 0,
+          "pct_of_capital": 0,
+          "beta_haircut_applied": false
+        },
+        "invalidation": {
+          "level": null,
+          "timeframe": "4H",
+          "direction": "n/a"
+        }
+      },
+      "risk_audit": {
+        "funding_crowding": {
+          "status": "WARNING",
+          "detail": "Funding +0.0917% \u2014 leveraged longs overcrowded."
+        },
+        "liquidity": {
+          "status": "CLEAR"
+        },
+        "whale_concentration": {
+          "status": "CLEAR"
+        },
+        "token_unlock": {
+          "status": "CLEAR"
+        },
+        "beta": {
+          "status": "CLEAR"
+        },
+        "mtf_divergence": {
+          "status": "CLEAR"
+        },
+        "volume_confirmation": {
+          "status": "UNCONFIRMED",
+          "detail": "4H volume 0.11x avg \u2014 below average."
+        },
+        "data_completeness": {
+          "status": "FULL"
+        },
+        "overall_risk": "MODERATE"
+      },
+      "narratives": {
+        "wolf": "Book near balance (1.19) \u2014 no side has clear commitment. Visible ask wall at 0.613200 acts as magnetic resistance above. Bid wall at 0.608700 is the line the market must hold. Tape prints 65% aggressive buys \u2014 flow is directional up. Price is below VWAP (0.636237) \u2014 intraday institutional bias leans bearish.",
+        "insider": "Funding at +0.0917% \u2014 longs are paying a tax; spot upside is rented, not owned. Long/short 0.69 \u2014 crowd is short, any strength gets chased.",
+        "verdict": "Regime: CHAOTIC. Composite score -0.3. No edge. Do not trade. Capital is a position. 24H expected value +1.93% \u2014 favorable edge. Watch for: volume below average; funding crowded long. Trade the plan, respect the invalidation, size for survival."
+      }
+    },
+    "brief_markdown": "# ORACLE INTELLIGENCE BRIEF \u2014 SkyAI (SKYAI)\n**Timestamp:** 2026-05-05T12:08:04Z  \n**Price:** $0.610098 (Binance: $n/a | MEXC: $0.618200 | CoinGecko: $0.601996 | Spread: 2.656%)  \n**Market Regime:** CHAOTIC \u2014 ATR on 4H is 14.28% of price \u2014 volatility well above normal, standard signals unreliable.  \n**Data Completeness:** 100% | Missing: none\n\n---\n\n## THE WOLF'S READ \u2014 Market Microstructure\n> *Order flow, crowd psychology, price action.*\n\nBook near balance (1.19) \u2014 no side has clear commitment. Visible ask wall at 0.613200 acts as magnetic resistance above. Bid wall at 0.608700 is the line the market must hold. Tape prints 65% aggressive buys \u2014 flow is directional up. Price is below VWAP (0.636237) \u2014 intraday institutional bias leans bearish.\n\n---\n\n## THE INSIDER'S READ \u2014 Smart Money & Derivatives\n> *What the money is doing, not what it says.*\n\n**Funding Rate:** +0.0917% per period \u2192 longs_paying \u2192 overcrowded longs  \n**OI:** $138,813,700.00  \n**Exchange Flow (24h):** data_unavailable (n/a)  \n**Whale Activity:** 0 buys / 0 sells in 24h  \n**Long/Short Ratio:** 0.6909\n\nFunding at +0.0917% \u2014 longs are paying a tax; spot upside is rented, not owned. Long/short 0.69 \u2014 crowd is short, any strength gets chased.\n\n---\n\n## THE QUANT'S ANALYSIS \u2014 Multi-Timeframe Signal Engine\n\n### Regime: CHAOTIC\n\n| Timeframe | Trend | RSI | MACD | BB | Volume | Score |\n|---|---|---|---|---|---|---|\n| 1D | n/a | n/a | none | n/a | n/a | n/a/100 |\n| 4H | bullish | 59.4 neutral | none | upper half | 0.11x | 9.0/100 |\n| 1H | bullish | 52.0 neutral | none | mid | 1.11x | -17.0/100 |\n| 15M | bullish | 62.6 upper | none | upper band | 2.94x | 35.0/100 |\n\n**Weighted MTF Score: +1.40/100**\n\n**Dominant Pattern:** none \u2014 neutral \u2014 Confidence: n/a%  \n**Divergences Detected:** 4h  \n**Ichimoku State (4H):** Price above cloud | Cloud bullish | TK: bullish  \n**ATR (4H):** $0.087918 (14.28% of price) \u2192 SL for conservative: $n/a\n\n---\n\n## COMPOSITE SIGNAL SCORECARD\n\n| Engine | Raw Score | Weight | Contribution |\n|---|---|---|---|\n| MTF Technical | +1.40/100 | 40% | +0.56 |\n| Smart Money (DPI+WFI) | -5.00/100 | 25% | -1.25 |\n| Chart Patterns | +0.00/100 | 15% | +0.00 |\n| Sentiment | +0.00/100 | 10% | +0.00 |\n| Macro Adjustment | +0.00/100 | 10% | +0.00 |\n| **Regime Multiplier** | \u00d70.50 | \u2014 | applied |\n| **FINAL SCORE** | **-0.35/100** | \u2014 | **NEUTRAL** |\n\n---\n\n## KEY PRICE LEVELS\n\n| Level | Price | Type | Method | Strength |\n|---|---|---|---|---|\n| R3 | n/a | Resistance |  |  |\n| R2 | n/a | Resistance |  |  |\n| R1 | n/a | Resistance |  |  |\n| **NOW** | **$0.610098** | Current | \u2014 | \u2014 |\n| S1 | 0.531300 | Support | Swing cluster | Med |\n| S2 | 0.326300 | Support | Swing cluster | Med |\n| S3 | n/a | Support |  |  |\n| Liquidation Wall (Longs) | $0.608700 | Danger | Order book | High |\n| Liquidation Wall (Shorts) | $0.613200 | Magnet | Order book | High |\n\n---\n\n## TRADE EXECUTION PLAN\n\n**Direction:** FLAT  \n**Setup Quality:** No Trade  \n**Expected Value (24H):** +1.93% \u2192 favorable edge\n\n| Parameter | Conservative | Moderate | Aggressive |\n|---|---|---|---|\n| Entry Zone | $n/a\u2013$n/a | $n/a\u2013$n/a | $n/a (market) |\n| Stop Loss | n/a | n/a | n/a |\n| TP1 \u2014 40% | n/a | n/a | n/a |\n| TP2 \u2014 35% | n/a | n/a | n/a |\n| TP3 \u2014 trail 25% | n/a | n/a | n/a |\n| R:R Ratio | 1:1.5 / 1:2.5 / 1:4.0 | 1:1.5 / 1:2.5 / 1:4.0 | 1:1.5 / 1:2.5 / 1:4.0 |\n\n**Kelly Fraction:** Win prob n/a% | Avg R:R n/a \u2192 Full Kelly: n/a% | Half Kelly (recommended): n/a%  \n**Position Size ($10k capital, 1% risk):** $0 (0% of capital)  \n**Invalidation:** Price closes n/a $n/a on 4H \u2014 exit immediately.\n\n---\n\n## PRICE PREDICTION\n\n| Scenario | Probability | 24H Target | 7D Target | Trigger |\n|---|---|---|---|---|\n| Bull | 22.4% | $0.741975 (+21.62%) | $0.961771 (+57.64%) | Close > 0.741975 on 4H with volume >150% of 20-period average |\n| Base Case | 55.0% | $0.544159\u2013$0.676037 | $0.434261\u2013$0.785935 | Structure continuation without catalyst \u2014 oscillation between nearest S/R |\n| Bear | 22.6% | $0.531300 (-12.92%) | $0.326300 (-46.52%) | Close < 0.531300 on 4H on expanding volume |\n\n**24H Expected Value: +1.93%** \u2014 favorable edge\n\n---\n\n## RISK AUDIT\n\n- **Funding rate crowding:** WARNING \u2014 Funding +0.0917% \u2014 leveraged longs overcrowded.\n- **Liquidity:** CLEAR\n- **Whale concentration:** CLEAR\n- **Token unlock pressure:** CLEAR\n- **Beta / BTC amplification:** CLEAR\n- **MTF divergence:** CLEAR\n- **Volume confirmation:** UNCONFIRMED \u2014 4H volume 0.11x avg \u2014 below average.\n- **Data completeness:** FULL\n\n**Overall Risk Rating:** MODERATE\n\n---\n\n## ORACLE'S VERDICT\n\nRegime: CHAOTIC. Composite score -0.3. No edge. Do not trade. Capital is a position. 24H expected value +1.93% \u2014 favorable edge. Watch for: volume below average; funding crowded long. Trade the plan, respect the invalidation, size for survival.\n\n---\n\n*This analysis is generated from quantitative algorithms and market data. It is educational intelligence, not financial advice. Markets are probabilistic, not deterministic. Manage your risk. Size your positions. Never risk capital you cannot afford to lose.*"
+  },
+  "data_quality": {
+    "sources_used": [
+      "binance",
+      "coingecko",
+      "cmc"
+    ],
+    "sources_failed": [],
+    "confidence": "high"
+  }
+}

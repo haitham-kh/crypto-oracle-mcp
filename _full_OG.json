@@ -1,0 +1,1959 @@
+{
+  "success": true,
+  "tool": "full_coin_intelligence_report",
+  "symbol": "OG",
+  "timestamp": 1777998897,
+  "data": {
+    "coin_profile": {
+      "symbol": "OG",
+      "name": "OG Fan Token",
+      "coingecko_id": "og-fan-token",
+      "cmc_id": 5309,
+      "cmc_slug": "og-fan-token",
+      "binance_symbol": "OG",
+      "mexc_symbol": "OG",
+      "market_cap_rank": 1057,
+      "all_coingecko_results": [
+        {
+          "id": "dogecoin",
+          "name": "Dogecoin",
+          "symbol": "DOGE",
+          "market_cap_rank": 10,
+          "thumb": "https://coin-images.coingecko.com/coins/images/5/thumb/dogecoin.png",
+          "large": "https://coin-images.coingecko.com/coins/images/5/large/dogecoin.png"
+        },
+        {
+          "id": "dogwifcoin",
+          "name": "dogwifhat",
+          "symbol": "WIF",
+          "market_cap_rank": 187,
+          "thumb": "https://coin-images.coingecko.com/coins/images/33566/thumb/dogwifhat.jpg",
+          "large": "https://coin-images.coingecko.com/coins/images/33566/large/dogwifhat.jpg"
+        },
+        {
+          "id": "bnb48-club-token",
+          "name": "KOGE",
+          "symbol": "KOGE",
+          "market_cap_rank": 280,
+          "thumb": "https://coin-images.coingecko.com/coins/images/13827/thumb/bnb48.png",
+          "large": "https://coin-images.coingecko.com/coins/images/13827/large/bnb48.png"
+        },
+        {
+          "id": "dog-go-to-the-moon-rune",
+          "name": "Dog (Bitcoin)",
+          "symbol": "DOG",
+          "market_cap_rank": 349,
+          "thumb": "https://coin-images.coingecko.com/coins/images/37352/thumb/DOGGOTOTHEMOON.png",
+          "large": "https://coin-images.coingecko.com/coins/images/37352/large/DOGGOTOTHEMOON.png"
+        },
+        {
+          "id": "baby-doge-coin",
+          "name": "Baby Doge Coin",
+          "symbol": "BABYDOGE",
+          "market_cap_rank": 354,
+          "thumb": "https://coin-images.coingecko.com/coins/images/16125/thumb/babydoge.jpg",
+          "large": "https://coin-images.coingecko.com/coins/images/16125/large/babydoge.jpg"
+        }
+      ],
+      "all_cmc_results": [
+        {
+          "id": 5309,
+          "name": "OG Fan Token",
+          "symbol": "OG",
+          "slug": "og-fan-token",
+          "rank": 875,
+          "is_active": 1,
+          "platform": {
+            "id": 232,
+            "name": "Chiliz Chain",
+            "symbol": "CHZ",
+            "slug": "chiliz",
+            "token_address": "0xb3f2e39acc68f98229b2587361a8ce30acdf0442"
+          },
+          "first_historical_data": "2020-06-21T15:50:00.000Z"
+        },
+        {
+          "id": 18401,
+          "name": "Oogear",
+          "symbol": "OG",
+          "slug": "oogear",
+          "rank": null,
+          "is_active": 0,
+          "platform": {
+            "id": 1,
+            "name": "Ethereum",
+            "symbol": "ETH",
+            "slug": "ethereum",
+            "token_address": "0xE89C20096b636fFec9fd26d1a623F42A33eaD309"
+          },
+          "first_historical_data": null
+        },
+        {
+          "id": 22119,
+          "name": "OriginDAO",
+          "symbol": "OG",
+          "slug": "origindao",
+          "rank": null,
+          "is_active": 0,
+          "platform": {
+            "id": 1,
+            "name": "Ethereum",
+            "symbol": "ETH",
+            "slug": "ethereum",
+            "token_address": "0x11a0762da58a487c075249b9b9edf9f7eb1bc9f5"
+          },
+          "first_historical_data": null
+        }
+      ]
+    },
+    "metadata": null,
+    "current_price": {
+      "binance_price": 3.022,
+      "mexc_price": 3.023,
+      "coingecko_price": 3.02,
+      "average_price": 3.02166667,
+      "price_spread_pct": 0.0993,
+      "spread_flag": false,
+      "timestamp": "2026-05-05T16:34:40.492770+00:00"
+    },
+    "macro_context": {
+      "fear_greed": {
+        "current_value": 50,
+        "current_label": "Neutral",
+        "yesterday_value": 40,
+        "last_week_value": 33,
+        "avg_30d": 27.8,
+        "historical_trend": "rising",
+        "interpretation": "Neutral \u2014 no strong sentiment bias",
+        "historical": [
+          {
+            "value": 50,
+            "label": "Neutral",
+            "timestamp": "1777939200"
+          },
+          {
+            "value": 40,
+            "label": "Fear",
+            "timestamp": "1777852800"
+          },
+          {
+            "value": 47,
+            "label": "Neutral",
+            "timestamp": "1777766400"
+          },
+          {
+            "value": 39,
+            "label": "Fear",
+            "timestamp": "1777680000"
+          },
+          {
+            "value": 26,
+            "label": "Fear",
+            "timestamp": "1777593600"
+          },
+          {
+            "value": 29,
+            "label": "Fear",
+            "timestamp": "1777507200"
+          },
+          {
+            "value": 26,
+            "label": "Fear",
+            "timestamp": "1777420800"
+          },
+          {
+            "value": 33,
+            "label": "Fear",
+            "timestamp": "1777334400"
+          },
+          {
+            "value": 47,
+            "label": "Neutral",
+            "timestamp": "1777248000"
+          },
+          {
+            "value": 33,
+            "label": "Fear",
+            "timestamp": "1777161600"
+          },
+          {
+            "value": 31,
+            "label": "Fear",
+            "timestamp": "1777075200"
+          },
+          {
+            "value": 39,
+            "label": "Fear",
+            "timestamp": "1776988800"
+          },
+          {
+            "value": 46,
+            "label": "Fear",
+            "timestamp": "1776902400"
+          },
+          {
+            "value": 32,
+            "label": "Fear",
+            "timestamp": "1776816000"
+          },
+          {
+            "value": 33,
+            "label": "Fear",
+            "timestamp": "1776729600"
+          },
+          {
+            "value": 29,
+            "label": "Fear",
+            "timestamp": "1776643200"
+          },
+          {
+            "value": 27,
+            "label": "Fear",
+            "timestamp": "1776556800"
+          },
+          {
+            "value": 26,
+            "label": "Fear",
+            "timestamp": "1776470400"
+          },
+          {
+            "value": 21,
+            "label": "Extreme Fear",
+            "timestamp": "1776384000"
+          },
+          {
+            "value": 23,
+            "label": "Extreme Fear",
+            "timestamp": "1776297600"
+          },
+          {
+            "value": 23,
+            "label": "Extreme Fear",
+            "timestamp": "1776211200"
+          },
+          {
+            "value": 21,
+            "label": "Extreme Fear",
+            "timestamp": "1776124800"
+          },
+          {
+            "value": 12,
+            "label": "Extreme Fear",
+            "timestamp": "1776038400"
+          },
+          {
+            "value": 16,
+            "label": "Extreme Fear",
+            "timestamp": "1775952000"
+          },
+          {
+            "value": 15,
+            "label": "Extreme Fear",
+            "timestamp": "1775865600"
+          },
+          {
+            "value": 16,
+            "label": "Extreme Fear",
+            "timestamp": "1775779200"
+          },
+          {
+            "value": 14,
+            "label": "Extreme Fear",
+            "timestamp": "1775692800"
+          },
+          {
+            "value": 17,
+            "label": "Extreme Fear",
+            "timestamp": "1775606400"
+          },
+          {
+            "value": 11,
+            "label": "Extreme Fear",
+            "timestamp": "1775520000"
+          },
+          {
+            "value": 13,
+            "label": "Extreme Fear",
+            "timestamp": "1775433600"
+          }
+        ]
+      },
+      "global_market": {
+        "total_market_cap_usd": 2769501635002.6055,
+        "total_volume_24h": 95364024319.61018,
+        "btc_dominance_pct": 58.85353179315058,
+        "eth_dominance_pct": 10.35692056083434,
+        "altcoin_market_cap": 1053314737018.5624,
+        "defi_volume": 8871940901.821436,
+        "active_coins": 17416,
+        "market_cap_change_24h_pct": 1.468074199018646
+      }
+    },
+    "technical_analysis": {
+      "15m": {
+        "ema9": 3.02399286,
+        "ema21": 3.02532121,
+        "ema50": 3.02542673,
+        "ema200": 3.02378432,
+        "sma20": 3.0268,
+        "sma50": 3.02482,
+        "sma200": 3.0232,
+        "price_vs_ema200": "below",
+        "golden_cross_active": true,
+        "death_cross_active": false,
+        "ema_cross_status": "bearish",
+        "adx": 14.64770897,
+        "di_plus": 21.89591838,
+        "di_minus": 21.0746069,
+        "trend_strength": "weak",
+        "trend_direction": "bullish",
+        "ichimoku": {
+          "tenkan": 3.022,
+          "kijun": 3.032,
+          "senkou_a": 3.027,
+          "senkou_b": 3.029,
+          "price_vs_cloud": "below",
+          "cloud_color": "bearish",
+          "tk_cross": "bearish"
+        },
+        "rsi": 47.34086781,
+        "rsi_zone": "neutral",
+        "rsi_divergence": "none",
+        "macd_line": -0.00103665,
+        "macd_signal": -0.00049657,
+        "macd_histogram": -0.00054008,
+        "macd_above_signal": false,
+        "macd_crossover": "none",
+        "stochrsi_k": 0.70215573,
+        "stochrsi_d": 0.61182904,
+        "cci": -75.1312336,
+        "williams_r": -57.14285714,
+        "roc": -0.16518005,
+        "mfi": 47.70471808,
+        "cmf": 0.12516491,
+        "kdj_k": 50.0,
+        "kdj_d": 58.99470899,
+        "kdj_j": 32.0106,
+        "bb_upper": 3.03733755,
+        "bb_middle": 3.0268,
+        "bb_lower": 3.01626245,
+        "bb_percent_b": 0.27224311,
+        "bb_bandwidth": 0.69628333,
+        "bb_squeeze": true,
+        "atr": 0.00848791,
+        "atr_pct": 0.2809,
+        "kc_upper": 3.03373333,
+        "kc_basis": 3.02648333,
+        "kc_lower": 3.01923333,
+        "dc_upper": 3.037,
+        "dc_mid": 3.025,
+        "dc_lower": 3.013,
+        "historical_volatility_annualized": 3.93,
+        "obv": 22297.4,
+        "obv_trend": "flat",
+        "vwap": 3.02378873,
+        "price_vs_vwap": "below",
+        "volume_vs_avg": 0.12,
+        "volume_spike": false,
+        "cvd": 7199.4,
+        "candlestick_patterns": [],
+        "pivot_points": {
+          "pivot": 3.02733333,
+          "R1": 3.03266667,
+          "R2": 3.03633333,
+          "S1": 3.02366667,
+          "S2": 3.01833333
+        },
+        "signal_score": 0,
+        "signal_summary": "NEUTRAL",
+        "timeframe": "15m"
+      },
+      "1h": {
+        "ema9": 3.02536812,
+        "ema21": 3.02526154,
+        "ema50": 3.02067871,
+        "ema200": 3.00364328,
+        "sma20": 3.0252,
+        "sma50": 3.02416,
+        "sma200": 2.98947,
+        "price_vs_ema200": "above",
+        "golden_cross_active": true,
+        "death_cross_active": false,
+        "ema_cross_status": "bullish",
+        "adx": 19.38358615,
+        "di_plus": 20.66484515,
+        "di_minus": 14.41542132,
+        "trend_strength": "weak",
+        "trend_direction": "bullish",
+        "ichimoku": {
+          "tenkan": 3.029,
+          "kijun": 3.0315,
+          "senkou_a": 3.03025,
+          "senkou_b": 3.0205,
+          "price_vs_cloud": "inside",
+          "cloud_color": "bullish",
+          "tk_cross": "bearish"
+        },
+        "rsi": 48.66433874,
+        "rsi_zone": "neutral",
+        "rsi_divergence": "none",
+        "macd_line": 0.00049608,
+        "macd_signal": 0.00091749,
+        "macd_histogram": -0.0004214,
+        "macd_above_signal": false,
+        "macd_crossover": "none",
+        "stochrsi_k": 0.18803756,
+        "stochrsi_d": 0.22273766,
+        "cci": -19.20122888,
+        "williams_r": -65.90909091,
+        "roc": 0.03310162,
+        "mfi": 32.30619854,
+        "cmf": 0.09371508,
+        "kdj_k": 34.09090909,
+        "kdj_d": 37.12121212,
+        "kdj_j": 28.0303,
+        "bb_upper": 3.04725992,
+        "bb_middle": 3.0252,
+        "bb_lower": 3.00314008,
+        "bb_percent_b": 0.42747027,
+        "bb_bandwidth": 1.45841058,
+        "bb_squeeze": true,
+        "atr": 0.0193318,
+        "atr_pct": 0.6397,
+        "kc_upper": 3.0455,
+        "kc_basis": 3.02475,
+        "kc_lower": 3.004,
+        "dc_upper": 3.063,
+        "dc_mid": 3.0315,
+        "dc_lower": 3.0,
+        "historical_volatility_annualized": 9.04,
+        "obv": 57449.3,
+        "obv_trend": "flat",
+        "vwap": 3.02348467,
+        "price_vs_vwap": "below",
+        "volume_vs_avg": 0.43,
+        "volume_spike": false,
+        "cvd": -11658.5,
+        "candlestick_patterns": [],
+        "pivot_points": {
+          "pivot": 3.02066667,
+          "R1": 3.02833333,
+          "R2": 3.03566667,
+          "S1": 3.01333333,
+          "S2": 3.00566667
+        },
+        "signal_score": 40,
+        "signal_summary": "BUY",
+        "timeframe": "1h"
+      },
+      "4h": {
+        "ema9": 3.02296426,
+        "ema21": 3.01337893,
+        "ema50": 3.01174164,
+        "ema200": 2.92294659,
+        "sma20": 3.0201,
+        "sma50": 2.98772,
+        "sma200": 2.894925,
+        "price_vs_ema200": "above",
+        "golden_cross_active": true,
+        "death_cross_active": false,
+        "ema_cross_status": "bullish",
+        "adx": 17.74445458,
+        "di_plus": 21.34914471,
+        "di_minus": 14.25980879,
+        "trend_strength": "weak",
+        "trend_direction": "bullish",
+        "ichimoku": {
+          "tenkan": 3.0315,
+          "kijun": 2.9985,
+          "senkou_a": 3.015,
+          "senkou_b": 3.043,
+          "price_vs_cloud": "inside",
+          "cloud_color": "bearish",
+          "tk_cross": "bullish"
+        },
+        "rsi": 53.51723136,
+        "rsi_zone": "neutral",
+        "rsi_divergence": "none",
+        "macd_line": 0.00987784,
+        "macd_signal": 0.00987697,
+        "macd_histogram": 8.7e-07,
+        "macd_above_signal": true,
+        "macd_crossover": "none",
+        "stochrsi_k": 0.34828114,
+        "stochrsi_d": 0.40789792,
+        "cci": 15.11937782,
+        "williams_r": -48.23529412,
+        "roc": -0.6574622,
+        "mfi": 49.66798676,
+        "cmf": -0.06394527,
+        "kdj_k": 34.92063492,
+        "kdj_d": 45.88857765,
+        "kdj_j": 12.9847,
+        "bb_upper": 3.05282247,
+        "bb_middle": 3.0201,
+        "bb_lower": 2.98737753,
+        "bb_percent_b": 0.52903204,
+        "bb_bandwidth": 2.1669792,
+        "bb_squeeze": true,
+        "atr": 0.03936395,
+        "atr_pct": 1.3026,
+        "kc_upper": 3.0619,
+        "kc_basis": 3.02035,
+        "kc_lower": 2.9788,
+        "dc_upper": 3.073,
+        "dc_mid": 3.016,
+        "dc_lower": 2.959,
+        "historical_volatility_annualized": 12.78,
+        "obv": 2721170.6,
+        "obv_trend": "flat",
+        "vwap": 3.02497667,
+        "price_vs_vwap": "below",
+        "volume_vs_avg": 0.09,
+        "volume_spike": false,
+        "cvd": -137885.4,
+        "candlestick_patterns": [],
+        "pivot_points": {
+          "pivot": 3.023,
+          "R1": 3.033,
+          "R2": 3.045,
+          "S1": 3.011,
+          "S2": 3.001
+        },
+        "signal_score": 30,
+        "signal_summary": "BUY",
+        "timeframe": "4h"
+      },
+      "1d": {
+        "ema9": 3.01097684,
+        "ema21": 2.98365109,
+        "ema50": 3.02485751,
+        "ema200": 6.69958662,
+        "sma20": 3.0395,
+        "sma50": 2.83098,
+        "sma200": 7.166465,
+        "price_vs_ema200": "below",
+        "golden_cross_active": false,
+        "death_cross_active": true,
+        "ema_cross_status": "bullish",
+        "adx": 35.47640962,
+        "di_plus": 25.77497459,
+        "di_minus": 12.78366301,
+        "trend_strength": "moderate",
+        "trend_direction": "bullish",
+        "ichimoku": {
+          "tenkan": 3.043,
+          "kijun": 3.1095,
+          "senkou_a": 3.07625,
+          "senkou_b": 3.0465,
+          "price_vs_cloud": "below",
+          "cloud_color": "bullish",
+          "tk_cross": "bearish"
+        },
+        "rsi": 53.02804432,
+        "rsi_zone": "neutral",
+        "rsi_divergence": "none",
+        "macd_line": 0.04024192,
+        "macd_signal": 0.05486527,
+        "macd_histogram": -0.01462335,
+        "macd_above_signal": false,
+        "macd_crossover": "none",
+        "stochrsi_k": 0.35942978,
+        "stochrsi_d": 0.3492568,
+        "cci": -26.67404538,
+        "williams_r": -66.74584323,
+        "roc": -5.79800499,
+        "mfi": 59.42635193,
+        "cmf": -0.32229667,
+        "kdj_k": 43.47826087,
+        "kdj_d": 35.55371958,
+        "kdj_j": 59.3273,
+        "bb_upper": 3.20711682,
+        "bb_middle": 3.0395,
+        "bb_lower": 2.87188318,
+        "bb_percent_b": 0.4477976,
+        "bb_bandwidth": 11.02923671,
+        "bb_squeeze": true,
+        "atr": 0.15843592,
+        "atr_pct": 5.2428,
+        "kc_upper": 3.22706667,
+        "kc_basis": 3.05476667,
+        "kc_lower": 2.88246667,
+        "dc_upper": 3.425,
+        "dc_mid": 3.1535,
+        "dc_lower": 2.882,
+        "historical_volatility_annualized": 67.08,
+        "obv": -4370074.5,
+        "obv_trend": "flat",
+        "vwap": 3.02211319,
+        "price_vs_vwap": "below",
+        "volume_vs_avg": 0.26,
+        "volume_spike": false,
+        "cvd": -1722723.1,
+        "candlestick_patterns": [
+          "bearish_pin_bar",
+          "bullish_engulfing"
+        ],
+        "pivot_points": {
+          "pivot": 3.018,
+          "R1": 3.058,
+          "R2": 3.103,
+          "S1": 2.973,
+          "S2": 2.933
+        },
+        "signal_score": -30,
+        "signal_summary": "SELL",
+        "timeframe": "1d"
+      },
+      "1w": {
+        "ema9": 3.09664895,
+        "ema21": 4.57841756,
+        "ema50": 6.29617685,
+        "ema200": 5.67279512,
+        "sma20": 3.6747,
+        "sma50": 8.1151,
+        "sma200": 5.433995,
+        "price_vs_ema200": "below",
+        "golden_cross_active": true,
+        "death_cross_active": false,
+        "ema_cross_status": "bearish",
+        "adx": 21.29541803,
+        "di_plus": 24.12277515,
+        "di_minus": 27.86174335,
+        "trend_strength": "weak",
+        "trend_direction": "bearish",
+        "ichimoku": {
+          "tenkan": 3.0465,
+          "kijun": 9.538,
+          "senkou_a": 6.29225,
+          "senkou_b": 13.763,
+          "price_vs_cloud": "below",
+          "cloud_color": "bearish",
+          "tk_cross": "bearish"
+        },
+        "rsi": 34.86113211,
+        "rsi_zone": "lower",
+        "rsi_divergence": "none",
+        "macd_line": -1.73388351,
+        "macd_signal": -1.90045105,
+        "macd_histogram": 0.16656754,
+        "macd_above_signal": true,
+        "macd_crossover": "none",
+        "stochrsi_k": 0.92130482,
+        "stochrsi_d": 0.91284514,
+        "cci": -45.23804903,
+        "williams_r": -78.7673673,
+        "roc": 9.73129993,
+        "mfi": 73.11227613,
+        "cmf": -0.51186152,
+        "kdj_k": 48.02578566,
+        "kdj_d": 51.89363417,
+        "kdj_j": 40.2901,
+        "bb_upper": 7.62324703,
+        "bb_middle": 3.6747,
+        "bb_lower": -0.27384703,
+        "bb_percent_b": 0.41734934,
+        "bb_bandwidth": 214.90445636,
+        "bb_squeeze": false,
+        "atr": 1.19099921,
+        "atr_pct": 39.411,
+        "kc_upper": 4.92,
+        "kc_basis": 3.89505,
+        "kc_lower": 2.8701,
+        "dc_upper": 12.533,
+        "dc_mid": 7.4795,
+        "dc_lower": 2.426,
+        "historical_volatility_annualized": 368.88,
+        "obv": 228999676.4940003,
+        "obv_trend": "flat",
+        "vwap": 3.0319704,
+        "price_vs_vwap": "below",
+        "volume_vs_avg": 0.07,
+        "volume_spike": false,
+        "cvd": -21039578.57400001,
+        "candlestick_patterns": [
+          "doji",
+          "bearish_pin_bar",
+          "bullish_pin_bar"
+        ],
+        "pivot_points": {
+          "pivot": 3.03433333,
+          "R1": 3.18666667,
+          "R2": 3.35633333,
+          "S1": 2.86466667,
+          "S2": 2.71233333
+        },
+        "signal_score": -10,
+        "signal_summary": "NEUTRAL",
+        "timeframe": "1w"
+      }
+    },
+    "chart_patterns": {
+      "patterns_detected": [
+        {
+          "pattern_name": "Head and Shoulders",
+          "bullish_or_bearish": "bearish",
+          "confidence_pct": 75,
+          "target_price": 2.509,
+          "invalidation_price": 3.33603,
+          "neckline": 2.906,
+          "formed_at_index": 82
+        },
+        {
+          "pattern_name": "Inverse Head and Shoulders",
+          "bullish_or_bearish": "bullish",
+          "confidence_pct": 75,
+          "target_price": 3.212,
+          "invalidation_price": 2.85318,
+          "neckline": 3.047,
+          "formed_at_index": 89
+        },
+        {
+          "pattern_name": "Symmetrical Triangle",
+          "bullish_or_bearish": "bullish",
+          "confidence_pct": 60,
+          "target_price": 3.375,
+          "invalidation_price": 2.94822,
+          "formed_at_index": 90
+        },
+        {
+          "pattern_name": "Double Top",
+          "bullish_or_bearish": "bearish",
+          "confidence_pct": 58,
+          "target_price": 2.934,
+          "invalidation_price": 3.10373,
+          "neckline": 3.001,
+          "formed_at_index": 90
+        }
+      ],
+      "strongest_pattern": {
+        "pattern_name": "Head and Shoulders",
+        "bullish_or_bearish": "bearish",
+        "confidence_pct": 75,
+        "target_price": 2.509,
+        "invalidation_price": 3.33603,
+        "neckline": 2.906,
+        "formed_at_index": 82
+      },
+      "implied_direction": "bearish",
+      "price_target_if_pattern_plays_out": 2.509
+    },
+    "support_resistance": {
+      "vpvr_poc": 3.0267142857142857,
+      "vpvr_levels": [
+        {
+          "level": 3.02671429,
+          "volume": 1273247.6579006657
+        },
+        {
+          "level": 3.12157143,
+          "volume": 1081888.7514793093
+        },
+        {
+          "level": 2.59985714,
+          "volume": 800911.5616666666
+        }
+      ],
+      "strong_supports": [
+        {
+          "level": 2.979,
+          "touches": 2,
+          "last_tested": 189,
+          "strength_score": 50
+        },
+        {
+          "level": 2.95,
+          "touches": 1,
+          "last_tested": 149,
+          "strength_score": 20
+        },
+        {
+          "level": 2.916,
+          "touches": 1,
+          "last_tested": 85,
+          "strength_score": 20
+        },
+        {
+          "level": 2.9,
+          "touches": 1,
+          "last_tested": 104,
+          "strength_score": 20
+        },
+        {
+          "level": 2.882,
+          "touches": 1,
+          "last_tested": 166,
+          "strength_score": 20
+        }
+      ],
+      "strong_resistances": [
+        {
+          "level": 3.068,
+          "touches": 3,
+          "last_tested": 190,
+          "strength_score": 70
+        },
+        {
+          "level": 3.16,
+          "touches": 1,
+          "last_tested": 88,
+          "strength_score": 20
+        },
+        {
+          "level": 3.178,
+          "touches": 1,
+          "last_tested": 114,
+          "strength_score": 20
+        },
+        {
+          "level": 3.207,
+          "touches": 1,
+          "last_tested": 129,
+          "strength_score": 20
+        },
+        {
+          "level": 3.303,
+          "touches": 1,
+          "last_tested": 141,
+          "strength_score": 20
+        }
+      ],
+      "current_range": {
+        "lower": 2.979,
+        "upper": 3.068
+      },
+      "nearest_support": 2.979,
+      "nearest_resistance": 3.068,
+      "key_levels_pct_away": [
+        {
+          "level": 2.979,
+          "pct_from_current": 1.42,
+          "type": "support"
+        },
+        {
+          "level": 2.95,
+          "pct_from_current": 2.38,
+          "type": "support"
+        },
+        {
+          "level": 2.916,
+          "pct_from_current": 3.51,
+          "type": "support"
+        },
+        {
+          "level": 2.9,
+          "pct_from_current": 4.04,
+          "type": "support"
+        },
+        {
+          "level": 2.882,
+          "pct_from_current": 4.63,
+          "type": "support"
+        },
+        {
+          "level": 3.068,
+          "pct_from_current": 1.52,
+          "type": "resistance"
+        },
+        {
+          "level": 3.16,
+          "pct_from_current": 4.57,
+          "type": "resistance"
+        },
+        {
+          "level": 3.178,
+          "pct_from_current": 5.16,
+          "type": "resistance"
+        },
+        {
+          "level": 3.207,
+          "pct_from_current": 6.12,
+          "type": "resistance"
+        },
+        {
+          "level": 3.303,
+          "pct_from_current": 9.3,
+          "type": "resistance"
+        }
+      ],
+      "current_price": 3.022
+    },
+    "chart_image_path": "C:\\Users\\skuna\\cryptogame\\crypto-oracle-mcp\\charts\\OG_chart.png",
+    "order_book": {
+      "bids_top10": [
+        {
+          "price": 3.022,
+          "qty": 89.6,
+          "cumulative_usdt": 270.77
+        },
+        {
+          "price": 3.021,
+          "qty": 287.0,
+          "cumulative_usdt": 1137.8
+        },
+        {
+          "price": 3.02,
+          "qty": 729.3,
+          "cumulative_usdt": 3340.28
+        },
+        {
+          "price": 3.019,
+          "qty": 515.8,
+          "cumulative_usdt": 4897.48
+        },
+        {
+          "price": 3.018,
+          "qty": 613.8,
+          "cumulative_usdt": 6749.93
+        },
+        {
+          "price": 3.017,
+          "qty": 1036.1,
+          "cumulative_usdt": 9875.85
+        },
+        {
+          "price": 3.016,
+          "qty": 277.1,
+          "cumulative_usdt": 10711.58
+        },
+        {
+          "price": 3.015,
+          "qty": 558.7,
+          "cumulative_usdt": 12396.06
+        },
+        {
+          "price": 3.014,
+          "qty": 141.5,
+          "cumulative_usdt": 12822.54
+        },
+        {
+          "price": 3.013,
+          "qty": 874.5,
+          "cumulative_usdt": 15457.41
+        }
+      ],
+      "asks_top10": [
+        {
+          "price": 3.024,
+          "qty": 6.5,
+          "cumulative_usdt": 19.66
+        },
+        {
+          "price": 3.025,
+          "qty": 70.5,
+          "cumulative_usdt": 232.92
+        },
+        {
+          "price": 3.027,
+          "qty": 86.6,
+          "cumulative_usdt": 495.06
+        },
+        {
+          "price": 3.028,
+          "qty": 184.4,
+          "cumulative_usdt": 1053.42
+        },
+        {
+          "price": 3.029,
+          "qty": 428.4,
+          "cumulative_usdt": 2351.04
+        },
+        {
+          "price": 3.03,
+          "qty": 168.6,
+          "cumulative_usdt": 2861.9
+        },
+        {
+          "price": 3.031,
+          "qty": 305.9,
+          "cumulative_usdt": 3789.08
+        },
+        {
+          "price": 3.032,
+          "qty": 146.3,
+          "cumulative_usdt": 4232.67
+        },
+        {
+          "price": 3.033,
+          "qty": 825.7,
+          "cumulative_usdt": 6737.01
+        },
+        {
+          "price": 3.034,
+          "qty": 415.4,
+          "cumulative_usdt": 7997.34
+        }
+      ],
+      "bid_ask_spread_pct": 0.066181,
+      "bid_wall_at": 3.01,
+      "ask_wall_at": 3.033,
+      "total_bid_usdt_depth": 172485.34,
+      "total_ask_usdt_depth": 49635.52,
+      "imbalance_ratio": 3.475
+    },
+    "trade_flow": {
+      "trades_sample": [
+        {
+          "id": 88992889,
+          "price": 3.021,
+          "qty": 3.3,
+          "quote_qty": 9.9693,
+          "time": 1777994589616,
+          "is_buyer_maker": true
+        },
+        {
+          "id": 88992890,
+          "price": 3.022,
+          "qty": 5.5,
+          "quote_qty": 16.621,
+          "time": 1777994641527,
+          "is_buyer_maker": false
+        },
+        {
+          "id": 88992891,
+          "price": 3.022,
+          "qty": 5.2,
+          "quote_qty": 15.7144,
+          "time": 1777994641527,
+          "is_buyer_maker": false
+        },
+        {
+          "id": 88992892,
+          "price": 3.023,
+          "qty": 46.4,
+          "quote_qty": 140.2672,
+          "time": 1777994641528,
+          "is_buyer_maker": false
+        },
+        {
+          "id": 88992893,
+          "price": 3.023,
+          "qty": 3.3,
+          "quote_qty": 9.9759,
+          "time": 1777994641528,
+          "is_buyer_maker": false
+        },
+        {
+          "id": 88992894,
+          "price": 3.023,
+          "qty": 82.7,
+          "quote_qty": 250.0021,
+          "time": 1777994728765,
+          "is_buyer_maker": false
+        },
+        {
+          "id": 88992895,
+          "price": 3.023,
+          "qty": 29.7,
+          "quote_qty": 89.7831,
+          "time": 1777994842914,
+          "is_buyer_maker": false
+        },
+        {
+          "id": 88992896,
+          "price": 3.02,
+          "qty": 22.0,
+          "quote_qty": 66.44,
+          "time": 1777994922452,
+          "is_buyer_maker": true
+        },
+        {
+          "id": 88992897,
+          "price": 3.02,
+          "qty": 12.8,
+          "quote_qty": 38.656,
+          "time": 1777994922452,
+          "is_buyer_maker": true
+        },
+        {
+          "id": 88992898,
+          "price": 3.02,
+          "qty": 35.2,
+          "quote_qty": 106.304,
+          "time": 1777994922452,
+          "is_buyer_maker": true
+        },
+        {
+          "id": 88992899,
+          "price": 3.022,
+          "qty": 183.2,
+          "quote_qty": 553.6304,
+          "time": 1777994938357,
+          "is_buyer_maker": false
+        },
+        {
+          "id": 88992900,
+          "price": 3.023,
+          "qty": 145.2,
+          "quote_qty": 438.9396,
+          "time": 1777994938357,
+          "is_buyer_maker": false
+        },
+        {
+          "id": 88992901,
+          "price": 3.021,
+          "qty": 22.0,
+          "quote_qty": 66.462,
+          "time": 1777995028900,
+          "is_buyer_maker": true
+        },
+        {
+          "id": 88992902,
+          "price": 3.02,
+          "qty": 8.0,
+          "quote_qty": 24.16,
+          "time": 1777995028900,
+          "is_buyer_maker": true
+        },
+        {
+          "id": 88992903,
+          "price": 3.022,
+          "qty": 99.4,
+          "quote_qty": 300.3868,
+          "time": 1777995383235,
+          "is_buyer_maker": false
+        },
+        {
+          "id": 88992904,
+          "price": 3.021,
+          "qty": 22.0,
+          "quote_qty": 66.462,
+          "time": 1777995445354,
+          "is_buyer_maker": true
+        },
+        {
+          "id": 88992905,
+          "price": 3.021,
+          "qty": 44.2,
+          "quote_qty": 133.5282,
+          "time": 1777995445356,
+          "is_buyer_maker": false
+        },
+        {
+          "id": 88992906,
+          "price": 3.021,
+          "qty": 14.3,
+          "quote_qty": 43.2003,
+          "time": 1777995776957,
+          "is_buyer_maker": false
+        },
+        {
+          "id": 88992907,
+          "price": 3.021,
+          "qty": 14.3,
+          "quote_qty": 43.2003,
+          "time": 1777995776957,
+          "is_buyer_maker": false
+        },
+        {
+          "id": 88992908,
+          "price": 3.021,
+          "qty": 9.6,
+          "quote_qty": 29.0016,
+          "time": 1777995776958,
+          "is_buyer_maker": false
+        }
+      ],
+      "large_trades": [],
+      "buy_volume_pct": 79.61,
+      "sell_volume_pct": 20.39,
+      "avg_trade_size_usdt": 87.06,
+      "largest_trade_usdt": 833.44,
+      "trade_acceleration_score": 1.54
+    },
+    "derivatives": {
+      "funding_rates": {
+        "current_funding_rate": 0.005,
+        "avg_24h_funding": 0.005,
+        "avg_7d_funding": 0.005,
+        "funding_sentiment": "longs_paying",
+        "extreme_funding_flag": false,
+        "historical_funding": [
+          {
+            "rate_pct": 0.005,
+            "time": 1777708800000
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777723200009
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777737600010
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777752000000
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777766400005
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777780800014
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777795200003
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777809600004
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777824000000
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777838400000
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777852800000
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777867200003
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777881600000
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777896000000
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777910400003
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777924800007
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777939200000
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777953600000
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777968000011
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777982400006
+          },
+          {
+            "rate_pct": 0.005,
+            "time": 1777996800000
+          }
+        ]
+      },
+      "open_interest": {
+        "open_interest_usdt": 615611.2,
+        "long_short_ratio": 2.9857,
+        "top_trader_long_short_ratio": 2.4072,
+        "long_account_pct": 0.7491,
+        "short_account_pct": 0.2509
+      }
+    },
+    "whale_and_onchain": {
+      "whale_trades_24h": [
+        {
+          "size_usdt": 1333.91,
+          "direction": "buy",
+          "exchange": "binance"
+        },
+        {
+          "size_usdt": 3164.34,
+          "direction": "buy",
+          "exchange": "binance"
+        },
+        {
+          "size_usdt": 1233.21,
+          "direction": "sell",
+          "exchange": "binance"
+        },
+        {
+          "size_usdt": 1892.54,
+          "direction": "sell",
+          "exchange": "binance"
+        }
+      ],
+      "whale_buy_count": 2,
+      "whale_sell_count": 2,
+      "exchange_net_flow_24h": null,
+      "net_flow_interpretation": "data_unavailable"
+    },
+    "sentiment": null,
+    "news": {
+      "news": []
+    },
+    "correlations": null,
+    "risk_metrics": {
+      "sharpe_ratio": 2.3453,
+      "sortino_ratio": 5.136,
+      "max_drawdown_30d_pct": 9.32,
+      "max_drawdown_90d_pct": 50.69,
+      "daily_var_95_pct": -5.017,
+      "avg_daily_volatility_pct": 4.6016,
+      "beta_vs_btc": 0.3301,
+      "relative_strength_30d_pct": 0.0834,
+      "calmar_ratio": 22.1229,
+      "risk_category": "medium"
+    },
+    "entry_zones": {
+      "long": {
+        "direction": "long",
+        "risk_tolerance": "moderate",
+        "entry_zone": {
+          "ideal": 3.02166667,
+          "lower_bound": 3.00198469,
+          "upper_bound": 3.03347586
+        },
+        "stop_loss": {
+          "price": 2.94293877,
+          "pct_from_entry": 2.61,
+          "invalidation_reason": "Below key structural level + 2.0x ATR"
+        },
+        "tp1": {
+          "price": 3.13975852,
+          "rr_ratio": "1:1.5",
+          "exit_pct": "40%"
+        },
+        "tp2": {
+          "price": 3.21848642,
+          "rr_ratio": "1:2.5",
+          "exit_pct": "35%"
+        },
+        "tp3": {
+          "price": 3.33657827,
+          "rr_ratio": "1:4.0",
+          "exit_pct": "25%"
+        },
+        "atr_used": 0.03936395,
+        "position_size_pct_of_capital_recommended": 2,
+        "max_loss_per_trade_usdt_example": 200.0
+      },
+      "short": {
+        "direction": "short",
+        "risk_tolerance": "moderate",
+        "entry_zone": {
+          "ideal": 3.02497667,
+          "lower_bound": 3.01316748,
+          "upper_bound": 3.04465865
+        },
+        "stop_loss": {
+          "price": 3.10370457,
+          "pct_from_entry": 2.6,
+          "invalidation_reason": "Above key structural level + 2.0x ATR"
+        },
+        "tp1": {
+          "price": 2.90688482,
+          "rr_ratio": "1:1.5",
+          "exit_pct": "40%"
+        },
+        "tp2": {
+          "price": 2.82815692,
+          "rr_ratio": "1:2.5",
+          "exit_pct": "35%"
+        },
+        "tp3": {
+          "price": 2.71006507,
+          "rr_ratio": "1:4.0",
+          "exit_pct": "25%"
+        },
+        "atr_used": 0.03936395,
+        "position_size_pct_of_capital_recommended": 2,
+        "max_loss_per_trade_usdt_example": 200.0
+      }
+    },
+    "collection_metadata": {
+      "coin": "OG Fan Token",
+      "symbol": "OG",
+      "collection_timestamp": "2026-05-05T16:34:57.751380+00:00",
+      "data_completeness_pct": 100,
+      "failed_tools": []
+    },
+    "oracle_analysis": {
+      "symbol": "OG",
+      "name": "OG Fan Token",
+      "current_price": 3.02166667,
+      "price_sources": {
+        "binance": 3.022,
+        "mexc": 3.023,
+        "coingecko": 3.02,
+        "spread_pct": 0.0993
+      },
+      "data_completeness_pct": 100.0,
+      "missing_sections": [],
+      "regime": {
+        "regime": "VOLATILE",
+        "reason": "Bollinger squeeze active on 4H \u2014 breakout pending, direction unconfirmed until volume expansion.",
+        "multiplier": 0.7,
+        "adx_4h": 17.74445458,
+        "adx_1d": 35.47640962,
+        "atr_pct_4h": 1.3026,
+        "bb_squeeze_4h": true,
+        "bb_bandwidth_4h": 2.1669792
+      },
+      "mtf": {
+        "per_tf": {
+          "1d": {
+            "score": -22.0,
+            "contributions": [
+              [
+                "Price < EMA200",
+                -20.0
+              ],
+              [
+                "Death cross",
+                -15.0
+              ],
+              [
+                "TK cross bearish",
+                -8.0
+              ],
+              [
+                "ADX>25 DI+>DI-",
+                6.0
+              ],
+              [
+                "RSI 40-60 healthy",
+                15.0
+              ],
+              [
+                "MACD above zero",
+                8
+              ],
+              [
+                "CMF strong outflow",
+                -8
+              ],
+              [
+                "MFI healthy",
+                6
+              ],
+              [
+                "Price < VWAP",
+                -6
+              ]
+            ],
+            "available": true,
+            "rsi": 53.02804432,
+            "macd_crossover": "none",
+            "bb_percent_b": 0.4477976,
+            "volume_vs_avg": 0.26,
+            "trend_direction": "bullish",
+            "rsi_divergence": "none"
+          },
+          "4h": {
+            "score": 66.0,
+            "contributions": [
+              [
+                "Price > EMA200",
+                20.0
+              ],
+              [
+                "Golden cross",
+                15.0
+              ],
+              [
+                "TK cross bullish",
+                8.0
+              ],
+              [
+                "RSI 40-60 healthy",
+                15.0
+              ],
+              [
+                "MACD above zero",
+                8
+              ],
+              [
+                "MFI healthy",
+                6
+              ],
+              [
+                "Price < VWAP",
+                -6
+              ]
+            ],
+            "available": true,
+            "rsi": 53.51723136,
+            "macd_crossover": "none",
+            "bb_percent_b": 0.52903204,
+            "volume_vs_avg": 0.09,
+            "trend_direction": "bullish",
+            "rsi_divergence": "none"
+          },
+          "1h": {
+            "score": 44.0,
+            "contributions": [
+              [
+                "Price > EMA200",
+                20.0
+              ],
+              [
+                "Golden cross",
+                15.0
+              ],
+              [
+                "TK cross bearish",
+                -8.0
+              ],
+              [
+                "RSI 40-60 healthy",
+                15.0
+              ],
+              [
+                "MACD above zero",
+                8
+              ],
+              [
+                "Price < VWAP",
+                -6
+              ]
+            ],
+            "available": true,
+            "rsi": 48.66433874,
+            "macd_crossover": "none",
+            "bb_percent_b": 0.42747027,
+            "volume_vs_avg": 0.43,
+            "trend_direction": "bullish",
+            "rsi_divergence": "none"
+          },
+          "15m": {
+            "score": -8.0,
+            "contributions": [
+              [
+                "Price < EMA200",
+                -20.0
+              ],
+              [
+                "Golden cross",
+                15.0
+              ],
+              [
+                "Ichimoku price<cloud (red)",
+                -10.0
+              ],
+              [
+                "TK cross bearish",
+                -8.0
+              ],
+              [
+                "RSI 40-60 healthy",
+                15.0
+              ],
+              [
+                "MACD below zero",
+                -8
+              ],
+              [
+                "CMF strong inflow",
+                8
+              ],
+              [
+                "MFI healthy",
+                6
+              ],
+              [
+                "Price < VWAP",
+                -6
+              ]
+            ],
+            "available": true,
+            "rsi": 47.34086781,
+            "macd_crossover": "none",
+            "bb_percent_b": 0.27224311,
+            "volume_vs_avg": 0.12,
+            "trend_direction": "bullish",
+            "rsi_divergence": "none"
+          }
+        },
+        "mtf_score": 11.4
+      },
+      "smart_money": {
+        "score": 5,
+        "contributions": [
+          [
+            "Funding ~0 (accumulation)",
+            15
+          ],
+          [
+            "L/S>1.5 flush fuel",
+            -10
+          ],
+          [
+            "Ask wall / short liq cluster just above",
+            15
+          ],
+          [
+            "Bid wall / long liq cluster just below",
+            -15
+          ]
+        ],
+        "funding_rate_pct": 0.005,
+        "funding_sentiment": "longs_paying",
+        "open_interest_usdt": 615611.2,
+        "long_short_ratio": 2.9857,
+        "net_flow_24h": null,
+        "net_flow_interpretation": "data_unavailable",
+        "whale_buy_count": 2.0,
+        "whale_sell_count": 2.0
+      },
+      "pattern": {
+        "score": 0.0,
+        "pattern_name": "none",
+        "pattern_direction": "neutral",
+        "base_confidence_pct": null,
+        "conflicts_with_mtf": false
+      },
+      "macro": {
+        "score": 0,
+        "fear_greed_value": 50.0,
+        "fear_greed_trend": null,
+        "fear_greed_adjustment": 0,
+        "btc_dominance_pct": 58.85353179315058,
+        "btc_dominance_adjustment": 0,
+        "beta_vs_btc": 0.3301,
+        "size_haircut_from_beta": 0.0
+      },
+      "sentiment_score": {
+        "score": 0.0,
+        "trending_rank": null,
+        "sentiment_votes_up_pct": null
+      },
+      "composite": {
+        "raw_pre_regime": 5.81,
+        "final_score": 4.07,
+        "signal": "NEUTRAL",
+        "contributions": {
+          "mtf": 4.56,
+          "smart_money": 1.25,
+          "pattern": 0.0,
+          "sentiment": 0.0,
+          "macro": 0.0
+        }
+      },
+      "scenarios": {
+        "bull": {
+          "prob_pct": 23.6,
+          "target_24h": 3.068,
+          "target_24h_pct": 1.53,
+          "target_7d": 3.16,
+          "target_7d_pct": 4.58,
+          "trigger": "Close > 3.0680 on 4H with volume >150% of 20-period average"
+        },
+        "base": {
+          "prob_pct": 54.6,
+          "range_24h_low": 2.9921437075,
+          "range_24h_high": 3.0511896325000003,
+          "range_7d_low": 2.94293877,
+          "range_7d_high": 3.10039457,
+          "trigger": "Structure continuation without catalyst \u2014 oscillation between nearest S/R"
+        },
+        "bear": {
+          "prob_pct": 21.8,
+          "target_24h": 2.979,
+          "target_24h_pct": -1.41,
+          "target_7d": 2.95,
+          "target_7d_pct": -2.37,
+          "trigger": "Close < 2.9790 on 4H on expanding volume"
+        },
+        "ev_24h_pct": 0.05
+      },
+      "trade_plan": {
+        "direction": "FLAT",
+        "setup_quality": "No Trade",
+        "conservative": {
+          "entry_lower": null,
+          "entry_upper": null,
+          "entry_ideal": null,
+          "stop_loss": null,
+          "sl_pct": null,
+          "tp1": null,
+          "tp1_pct": null,
+          "tp2": null,
+          "tp2_pct": null,
+          "tp3": null,
+          "tp3_pct": null,
+          "rr_tp1": 1.5,
+          "rr_tp2": 2.5,
+          "rr_tp3": 4.0,
+          "risk_per_unit": 0
+        },
+        "moderate": {
+          "entry_lower": null,
+          "entry_upper": null,
+          "entry_ideal": null,
+          "stop_loss": null,
+          "sl_pct": null,
+          "tp1": null,
+          "tp1_pct": null,
+          "tp2": null,
+          "tp2_pct": null,
+          "tp3": null,
+          "tp3_pct": null,
+          "rr_tp1": 1.5,
+          "rr_tp2": 2.5,
+          "rr_tp3": 4.0,
+          "risk_per_unit": 0
+        },
+        "aggressive": {
+          "entry_lower": null,
+          "entry_upper": null,
+          "entry_ideal": null,
+          "stop_loss": null,
+          "sl_pct": null,
+          "tp1": null,
+          "tp1_pct": null,
+          "tp2": null,
+          "tp2_pct": null,
+          "tp3": null,
+          "tp3_pct": null,
+          "rr_tp1": 1.5,
+          "rr_tp2": 2.5,
+          "rr_tp3": 4.0,
+          "risk_per_unit": 0
+        },
+        "kelly": {
+          "win_prob": "n/a",
+          "avg_rr": "n/a",
+          "full_kelly_pct": "n/a",
+          "half_kelly_pct": "n/a",
+          "half_kelly_adj_pct": "n/a"
+        },
+        "position_size": {
+          "capital_example_usdt": 10000.0,
+          "risk_pct": 1.0,
+          "risk_usdt": 100.0,
+          "position_usdt": 0,
+          "pct_of_capital": 0,
+          "beta_haircut_applied": false
+        },
+        "invalidation": {
+          "level": null,
+          "timeframe": "4H",
+          "direction": "n/a"
+        }
+      },
+      "risk_audit": {
+        "funding_crowding": {
+          "status": "CLEAR"
+        },
+        "liquidity": {
+          "status": "CLEAR"
+        },
+        "whale_concentration": {
+          "status": "CLEAR"
+        },
+        "token_unlock": {
+          "status": "CLEAR"
+        },
+        "beta": {
+          "status": "CLEAR"
+        },
+        "mtf_divergence": {
+          "status": "CLEAR"
+        },
+        "volume_confirmation": {
+          "status": "UNCONFIRMED",
+          "detail": "4H volume 0.09x avg \u2014 below average."
+        },
+        "data_completeness": {
+          "status": "FULL"
+        },
+        "overall_risk": "MODERATE"
+      },
+      "market_snapshot": {
+        "market_cap_usd": null,
+        "market_cap_rank": null,
+        "fdv_usd": null,
+        "total_volume_usd": null,
+        "circulating_supply": null,
+        "max_supply": null,
+        "ath_usd": null,
+        "ath_change_pct": null,
+        "atl_usd": null,
+        "change_24h_pct": null,
+        "change_7d_pct": null,
+        "change_30d_pct": null,
+        "volume_mcap_ratio": null
+      },
+      "confluence": {
+        "bullish_factors": [
+          {
+            "label": "Price > EMA200",
+            "points": 20.0,
+            "origin": "MTF/4H"
+          },
+          {
+            "label": "Price > EMA200",
+            "points": 20.0,
+            "origin": "MTF/1H"
+          },
+          {
+            "label": "RSI 40-60 healthy",
+            "points": 15.0,
+            "origin": "MTF/1D"
+          },
+          {
+            "label": "Golden cross",
+            "points": 15.0,
+            "origin": "MTF/4H"
+          },
+          {
+            "label": "RSI 40-60 healthy",
+            "points": 15.0,
+            "origin": "MTF/4H"
+          },
+          {
+            "label": "Golden cross",
+            "points": 15.0,
+            "origin": "MTF/1H"
+          },
+          {
+            "label": "RSI 40-60 healthy",
+            "points": 15.0,
+            "origin": "MTF/1H"
+          },
+          {
+            "label": "Golden cross",
+            "points": 15.0,
+            "origin": "MTF/15M"
+          },
+          {
+            "label": "RSI 40-60 healthy",
+            "points": 15.0,
+            "origin": "MTF/15M"
+          },
+          {
+            "label": "Funding ~0 (accumulation)",
+            "points": 15.0,
+            "origin": "Smart-Money"
+          }
+        ],
+        "bearish_factors": [
+          {
+            "label": "Price < EMA200",
+            "points": -20.0,
+            "origin": "MTF/1D"
+          },
+          {
+            "label": "Price < EMA200",
+            "points": -20.0,
+            "origin": "MTF/15M"
+          },
+          {
+            "label": "Death cross",
+            "points": -15.0,
+            "origin": "MTF/1D"
+          },
+          {
+            "label": "Bid wall / long liq cluster just below",
+            "points": -15.0,
+            "origin": "Smart-Money"
+          },
+          {
+            "label": "Ichimoku price<cloud (red)",
+            "points": -10.0,
+            "origin": "MTF/15M"
+          },
+          {
+            "label": "L/S>1.5 flush fuel",
+            "points": -10.0,
+            "origin": "Smart-Money"
+          },
+          {
+            "label": "TK cross bearish",
+            "points": -8.0,
+            "origin": "MTF/1D"
+          },
+          {
+            "label": "CMF strong outflow",
+            "points": -8.0,
+            "origin": "MTF/1D"
+          },
+          {
+            "label": "TK cross bearish",
+            "points": -8.0,
+            "origin": "MTF/1H"
+          },
+          {
+            "label": "TK cross bearish",
+            "points": -8.0,
+            "origin": "MTF/15M"
+          }
+        ],
+        "bullish_count": 20,
+        "bearish_count": 15,
+        "net_factors": 5
+      },
+      "risk_profile": {
+        "available": true,
+        "volatility_30d_pct": null,
+        "sharpe_ratio": 2.3453,
+        "sortino_ratio": 5.136,
+        "max_drawdown_pct": null,
+        "var_95_pct": null,
+        "cvar_95_pct": null,
+        "calmar_ratio": 22.1229,
+        "beta_vs_btc": 0.3301,
+        "correlation_btc": null,
+        "risk_category": "medium"
+      },
+      "watchlist_triggers": {
+        "available": true,
+        "go_long_if": {
+          "trigger": "4H close > $3.0680 on volume \u2265 150% of 20-period avg",
+          "level": 3.068,
+          "confirms": "trend continuation; targets next R + ATR projection"
+        },
+        "go_short_if": {
+          "trigger": "4H close < $2.9790 on expanding volume",
+          "level": 2.979,
+          "confirms": "structure breakdown; targets next S + ATR projection"
+        },
+        "stand_aside_until": "price compresses inside $2.9790\u2013$3.0680 with funding/whale flow alignment",
+        "ask_wall": 3.033,
+        "bid_wall": 3.01
+      },
+      "conviction": {
+        "score": 35.6,
+        "label": "LOW",
+        "notes": [
+          "timeframes disagree",
+          "breakout pending"
+        ]
+      },
+      "catalysts": {
+        "days_until_next": null,
+        "events": [],
+        "has_near_term": false
+      },
+      "narratives": {
+        "wolf": "Bid depth outweighs asks 3.48\u00d7 \u2014 buyers absorbing supply, not chasing. Visible ask wall at 3.0330 acts as magnetic resistance above. Bid wall at 3.0100 is the line the market must hold. Tape prints 80% aggressive buys \u2014 flow is directional up. Trade pace accelerating 1.54\u00d7 \u2014 conviction is building.",
+        "insider": "Funding near neutral (+0.0050%) \u2014 no leveraged distortion, base rate respected. Long/short 2.99 \u2014 crowd is long, reflexive flush risk is real. Whales: 2 buy prints vs 2 sell prints in the 24h window.",
+        "verdict": "Regime: VOLATILE. Composite score +4.1. No edge. Do not trade. Capital is a position. 24H expected value +0.05% \u2014 favorable edge. Watch for: volume below average. Trade the plan, respect the invalidation, size for survival."
+      },
+      "markdown": "# ORACLE INTELLIGENCE BRIEF \u2014 OG Fan Token (OG)\n**Timestamp:** 2026-05-05T16:34:57Z  \n**Signal:** \u26aa **NEUTRAL** \u00b7 Score **+4.1/100** \u00b7 EV24H **+0.05%** \u00b7 Conviction **LOW** (35.6/100)  \n**Price:** $3.0217 (Binance: $3.0220 | MEXC: $3.0230 | CoinGecko: $3.0200 | Spread: 0.0993%)  \n**Market Regime:** VOLATILE \u2014 Bollinger squeeze active on 4H \u2014 breakout pending, direction unconfirmed until volume expansion.  \n**Data Completeness:** 100% | Missing: none\n\n---\n\n## THE WOLF'S READ \u2014 Market Microstructure\n> *Order flow, crowd psychology, price action.*\n\nBid depth outweighs asks 3.48\u00d7 \u2014 buyers absorbing supply, not chasing. Visible ask wall at 3.0330 acts as magnetic resistance above. Bid wall at 3.0100 is the line the market must hold. Tape prints 80% aggressive buys \u2014 flow is directional up. Trade pace accelerating 1.54\u00d7 \u2014 conviction is building.\n\n---\n\n## THE INSIDER'S READ \u2014 Smart Money & Derivatives\n> *What the money is doing, not what it says.*\n\n**Funding Rate:** +0.0050% per period \u2192 longs_paying \u2192 neutral positioning  \n**OI:** $615,611.20  \n**Exchange Flow (24h):** n/a (source unavailable)  \n**Whale Activity:** 2 buys / 2 sells in 24h  \n**Long/Short Ratio:** 2.9857\n\nFunding near neutral (+0.0050%) \u2014 no leveraged distortion, base rate respected. Long/short 2.99 \u2014 crowd is long, reflexive flush risk is real. Whales: 2 buy prints vs 2 sell prints in the 24h window.\n\n---\n\n## THE QUANT'S ANALYSIS \u2014 Multi-Timeframe Signal Engine\n\n### Regime: VOLATILE\n\n| Timeframe | Trend | RSI | MACD | BB | Volume | Score |\n|---|---|---|---|---|---|---|\n| 1D | bullish | 53.0 neutral | none | mid | 0.26x | -22.0/100 |\n| 4H | bullish | 53.5 neutral | none | mid | 0.09x | 66.0/100 |\n| 1H | bullish | 48.7 neutral | none | mid | 0.43x | 44.0/100 |\n| 15M | bullish | 47.3 neutral | none | lower half | 0.12x | -8.0/100 |\n\n**Weighted MTF Score: +11.40/100**\n\n**Dominant Pattern:** none \u2014 neutral \u2014 Confidence: n/a%  \n**Divergences Detected:** none  \n**Ichimoku State (4H):** Price inside cloud | Cloud bearish | TK: bullish  \n**ATR (4H):** $0.039364 (1.30% of price) \u2192 SL for conservative: hypothetical long $2.9626 / short $3.0807 (1.5\u00d7ATR)\n\n---\n\n## COMPOSITE SIGNAL SCORECARD\n\n| Engine | Raw Score | Weight | Contribution |\n|---|---|---|---|\n| MTF Technical | +11.40/100 | 40% | +4.56 |\n| Smart Money (DPI+WFI) | +5.00/100 | 25% | +1.25 |\n| Chart Patterns | +0.00/100 | 15% | +0.00 |\n| Sentiment | +0.00/100 | 10% | +0.00 |\n| Macro Adjustment | +0.00/100 | 10% | +0.00 |\n| **Regime Multiplier** | \u00d70.70 | \u2014 | applied |\n| **FINAL SCORE** | **+4.07/100** | \u2014 | **NEUTRAL** |\n\n---\n\n## CONFLUENCE MAP \u2014 What Aligns, What Conflicts\n\n**Bullish factors:** 20 \u00b7 **Bearish factors:** 15 \u00b7 **Net:** +5\n\n| # | Bullish | +pts | Origin | Bearish | \u2212pts | Origin |\n|---|---|---|---|---|---|---|\n| 1 | Price > EMA200 | +20.0 | MTF/4H | Price < EMA200 | -20.0 | MTF/1D |\n| 2 | Price > EMA200 | +20.0 | MTF/1H | Price < EMA200 | -20.0 | MTF/15M |\n| 3 | RSI 40-60 healthy | +15.0 | MTF/1D | Death cross | -15.0 | MTF/1D |\n| 4 | Golden cross | +15.0 | MTF/4H | Bid wall / long liq cluster just below | -15.0 | Smart-Money |\n| 5 | RSI 40-60 healthy | +15.0 | MTF/4H | Ichimoku price<cloud (red) | -10.0 | MTF/15M |\n| 6 | Golden cross | +15.0 | MTF/1H | L/S>1.5 flush fuel | -10.0 | Smart-Money |\n| 7 | RSI 40-60 healthy | +15.0 | MTF/1H | TK cross bearish | -8.0 | MTF/1D |\n\n---\n\n## KEY PRICE LEVELS\n\n| Level | Price | Type | Method | Strength |\n|---|---|---|---|---|\n| R3 | 3.1780 | Resistance | Swing cluster | Low |\n| R2 | 3.1600 | Resistance | Swing cluster | Low |\n| R1 | 3.0680 | Resistance | Swing cluster | High |\n| **NOW** | **$3.0217** | Current | \u2014 | \u2014 |\n| S1 | 2.9790 | Support | Swing cluster | Med |\n| S2 | 2.9500 | Support | Swing cluster | Low |\n| S3 | 2.9160 | Support | Swing cluster | Low |\n| Liquidation Wall (Longs) | $3.0100 | Danger | Order book | High |\n| Liquidation Wall (Shorts) | $3.0330 | Magnet | Order book | High |\n\n---\n\n## TRADE EXECUTION PLAN\n\n**Direction:** FLAT  \n**Setup Quality:** No Trade  \n**Expected Value (24H):** +0.05% \u2192 favorable edge\n\n> *No edge right now. Track these conditional triggers; do not pre-empt them.*\n\n| Bias Flip | Trigger | Confirms |\n|---|---|---|\n| **GO LONG** | 4H close > $3.0680 on volume \u2265 150% of 20-period avg | trend continuation; targets next R + ATR projection |\n| **GO SHORT** | 4H close < $2.9790 on expanding volume | structure breakdown; targets next S + ATR projection |\n| **STAND ASIDE** | price compresses inside $2.9790\u2013$3.0680 with funding/whale flow alignment | preserve capital |\n\n*Trade tiers, Kelly sizing, and invalidation are intentionally blank \u2014 they activate only when a directional signal fires.*\n\n---\n\n## PRICE PREDICTION\n\n| Scenario | Probability | 24H Target | 7D Target | Trigger |\n|---|---|---|---|---|\n| Bull | 23.6% | $3.0680 (+1.53%) | $3.1600 (+4.58%) | Close > 3.0680 on 4H with volume >150% of 20-period average |\n| Base Case | 54.6% | $2.9921\u2013$3.0512 | $2.9429\u2013$3.1004 | Structure continuation without catalyst \u2014 oscillation between nearest S/R |\n| Bear | 21.8% | $2.9790 (-1.41%) | $2.9500 (-2.37%) | Close < 2.9790 on 4H on expanding volume |\n\n**24H Expected Value: +0.05%** \u2014 favorable edge\n\n---\n\n## RISK PROFILE \u2014 Statistical\n\n| Metric | Value | Metric | Value |\n|---|---|---|---|\n| 30d Volatility | n/a | Risk Category | medium |\n| Sharpe Ratio | 2.35 | Sortino Ratio | 5.14 |\n| Max Drawdown | n/a | Calmar Ratio | 22.12 |\n| VaR 95% (1d) | n/a | CVaR 95% | n/a |\n| Beta vs BTC | 0.33 | Correlation BTC | n/a |\n\n---\n\n## RISK AUDIT\n\n- **Funding rate crowding:** CLEAR\n- **Liquidity:** CLEAR\n- **Whale concentration:** CLEAR\n- **Token unlock pressure:** CLEAR\n- **Beta / BTC amplification:** CLEAR\n- **MTF divergence:** CLEAR\n- **Volume confirmation:** UNCONFIRMED \u2014 4H volume 0.09x avg \u2014 below average.\n- **Data completeness:** FULL\n\n**Overall Risk Rating:** MODERATE\n\n---\n\n## ORACLE'S VERDICT\n\n\u26aa **NEUTRAL** \u00b7 Conviction **LOW** (35.6/100) \u00b7 Risk: **MODERATE**\n\nRegime: VOLATILE. Composite score +4.1. No edge. Do not trade. Capital is a position. 24H expected value +0.05% \u2014 favorable edge. Watch for: volume below average. Trade the plan, respect the invalidation, size for survival.\n\n*Conviction drivers:* timeframes disagree, breakout pending.\n\n**Watch Levels:**\n- Bullish trigger: **$3.0680** (4H close + volume)\n- Bearish trigger: **$2.9790** (4H close + volume)\n- Magnetic ask wall: **$3.0330**\n- Defended bid wall: **$3.0100**\n\n---\n\n*This analysis is generated from quantitative algorithms and market data. It is educational intelligence, not financial advice. Markets are probabilistic, not deterministic. Manage your risk. Size your positions. Never risk capital you cannot afford to lose.*"
+    }
+  },
+  "data_quality": {
+    "sources_used": [
+      "binance",
+      "coingecko",
+      "cmc"
+    ],
+    "sources_failed": [],
+    "confidence": "high"
+  }
+}
