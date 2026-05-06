@@ -90,7 +90,7 @@ def setup_storage():
     """Ensure the E: drive storage directories exist before downloading data."""
     os.makedirs(os.path.join(STORAGE_DIR, "raw_ticks"), exist_ok=True)
     os.makedirs(os.path.join(STORAGE_DIR, "processed_features"), exist_ok=True)
-    print(f"✅ Storage directories verified at {STORAGE_DIR}")
+    print(f"Storage directories verified at {STORAGE_DIR}")
 
 # --- POLARS CHUNKING EXAMPLE (Targeting E: Drive) ---
 # When you process Tardis.dev tick data, use Polars lazyframes to stream from E:
@@ -138,10 +138,10 @@ def process_tick_data_in_chunks(symbol: str, date_str: str):
             pl.when(pl.col("is_buyer_maker") == False).then(pl.col("qty"))
               .otherwise(-pl.col("qty")).sum().alias("ofi")
         ])
-    ).collect() # .collect() executes the chunked streaming graph
+    ).collect(streaming=True) # Enabled streaming to fix the memory allocation crash
     
     # Save the tiny, aggregated feature matrix back to E: as a fast Parquet file
     minute_bars.write_parquet(output_parquet)
-    print(f"✅ Successfully processed {raw_csv_path} -> {output_parquet}")
+    print(f"SUCCESS: Processed {raw_csv_path} -> {output_parquet}")
     
     return minute_bars

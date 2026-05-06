@@ -50,6 +50,17 @@ FEATURE_NAMES = [
     "distrib_probability", # 0 to 1
 ]
 
+# V2 expanded feature set (25 features) — used by XGBoost model
+FEATURE_NAMES_V2 = FEATURE_NAMES + [
+    "volume_zscore",       # rolling 20-bar z-score of volume
+    "atr_normalized_ofi", # ofi relative to ATR (volatility-adjusted)
+    "hour_sin",           # cyclical hour-of-day (sin component)
+    "hour_cos",           # cyclical hour-of-day (cos component)
+    "dow_sin",            # cyclical day-of-week (sin component)
+    "dow_cos",            # cyclical day-of-week (cos component)
+    "btc_return_60m",     # BTC 60-minute return (cross-market context)
+]
+
 
 def build_feature_vector(
     ofi: Dict,
@@ -374,6 +385,85 @@ class LogisticEVModel:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# XGBOOST EV MODEL (V2)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class XGBoostEVModel:
+    """XGBoost gradient boosting model for P(spot price up).
+    Finds non-linear feature interactions that logistic regression misses.
+    Falls back to LogisticEVModel if xgboost is not installed.
+    """
+
+    def __init__(self, model_path: Optional[str] = None, meta_path: Optional[str] = None):
+        self.model = None
+        self.calibrated = False
+        self.training_samples = 0
+        self.feature_names = list(FEATURE_NAMES_V2)
+        self.metadata = {}
+
+        if model_path and os.path.exists(model_path):
+            self._load(model_path, meta_path)
+
+    def _load(self, model_path: str, meta_path: Optional[str] = None):
+        try:
+            import xgboost as xgb
+            self.model = xgb.Booster()
+            self.model.load_model(model_path)
+            self.calibrated = True
+            if meta_path and os.path.exists(meta_path):
+                with open(meta_path) as f:
+                    self.metadata = json.load(f)
+                self.training_samples = self.metadata.get("total_samples", 0)
+                self.feature_names = self.metadata.get("feature_names", self.feature_names)
+        except Exception:
+            self.model = None
+            self.calibrated = False
+
+    def predict(self, feature_dict: Dict[str, float]) -> Dict[str, Any]:
+        """Predict P(up) using XGBoost model."""
+        if self.model is None:
+            return {"error": "XGBoost model not loaded", "p_up": 0.5, "p_down": 0.5,
+                    "confidence": 0, "model_calibrated": False,
+                    "calibration_warning": "XGBoost model file missing"}
+
+        import xgboost as xgb
+        values = [feature_dict.get(f, 0.0) for f in self.feature_names]
+        arr = np.array([values], dtype=np.float32)
+        dmat = xgb.DMatrix(arr, feature_names=self.feature_names)
+        p_up = float(self.model.predict(dmat)[0])
+        p_down = 1.0 - p_up
+        confidence = abs(p_up - 0.5) * 2
+
+        # Feature contributions via feature importance
+        contributions = []
+        try:
+            importance = self.model.get_score(importance_type='gain')
+            for feat in self.feature_names:
+                val = feature_dict.get(feat, 0.0)
+                gain = importance.get(feat, 0.0)
+                contributions.append({
+                    "feature": feat, "value": round(val, 4),
+                    "weight": round(gain, 2), "contribution": round(val * gain / 1000, 4)
+                })
+            contributions.sort(key=lambda x: -abs(x["contribution"]))
+        except Exception:
+            pass
+
+        return {
+            "p_up": round(p_up, 4), "p_down": round(p_down, 4),
+            "p_up_pct": round(p_up * 100, 1), "p_down_pct": round(p_down * 100, 1),
+            "raw_logit": round(float(np.log(p_up / max(p_down, 1e-10))), 4),
+            "confidence": round(confidence, 4),
+            "top_features": contributions[:5], "all_features": contributions,
+            "model_calibrated": self.calibrated,
+            "training_samples": self.training_samples,
+            "model_type": "xgboost_v2",
+            "calibration_warning": None if self.calibrated else
+                "⚠️ UNCALIBRATED — XGBoost model not trained yet.",
+        }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # EV COMPUTATION
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -476,12 +566,36 @@ _FEATURE_DESCRIPTIONS = {
 # ─────────────────────────────────────────────────────────────────────────────
 
 _MODEL_WEIGHTS_PATH = os.path.join(os.path.dirname(__file__), "data", "ev_model_weights.json")
-_model_instance: Optional[LogisticEVModel] = None
+_XGB_MODEL_PATH = os.path.join(os.path.dirname(__file__), "data", "ev_model_xgb.json")
+_XGB_META_PATH = os.path.join(os.path.dirname(__file__), "data", "ev_model_v2_meta.json")
+_XGB_V3_MODEL_PATH = os.path.join(os.path.dirname(__file__), "data", "ev_model_xgb_v3.json")
+_XGB_V3_META_PATH = os.path.join(os.path.dirname(__file__), "data", "ev_model_v3_meta.json")
+_model_instance = None
 
 
-def get_model() -> LogisticEVModel:
+def get_model():
+    """Get the best available model: v3 > v2 > logistic."""
     global _model_instance
     if _model_instance is None:
+        # Try v3 first (Phase A upgrades)
+        if os.path.exists(_XGB_V3_MODEL_PATH):
+            try:
+                m = XGBoostEVModel(model_path=_XGB_V3_MODEL_PATH, meta_path=_XGB_V3_META_PATH)
+                if m.calibrated:
+                    _model_instance = m
+                    return _model_instance
+            except Exception:
+                pass
+        # Try v2
+        if os.path.exists(_XGB_MODEL_PATH):
+            try:
+                m = XGBoostEVModel(model_path=_XGB_MODEL_PATH, meta_path=_XGB_META_PATH)
+                if m.calibrated:
+                    _model_instance = m
+                    return _model_instance
+            except Exception:
+                pass
+        # Fall back to logistic
         _model_instance = LogisticEVModel(weights_path=_MODEL_WEIGHTS_PATH)
     return _model_instance
 
