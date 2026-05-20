@@ -888,11 +888,13 @@ def main():
     micro_names = [f"V{i}" for i in range(N_V6_EXTRA)]
 
     # Step 5: Save models
+    global DRIVE_MODELS_DIR
     if DRIVE_AVAILABLE:
         os.makedirs(DRIVE_MODELS_DIR, exist_ok=True)
     else:
         # Save locally if Drive not mounted
-        os.makedirs(DRIVE_MODELS_DIR.replace("/content/drive/MyDrive", LOCAL_DATA_DIR), exist_ok=True)
+        DRIVE_MODELS_DIR = DRIVE_MODELS_DIR.replace("/content/drive/MyDrive", LOCAL_DATA_DIR)
+        os.makedirs(DRIVE_MODELS_DIR, exist_ok=True)
     horizon_results = {}
 
     for h in HORIZONS:
@@ -960,7 +962,10 @@ def main():
     print(f"     Total time  -> {(time.time()-t0)/60:.1f} min")
     print()
     print("NEXT STEPS:")
-    print("  1. Download MyDrive/crypto_oracle/models_v6/ from Google Drive")
+    if DRIVE_AVAILABLE:
+        print("  1. Download MyDrive/crypto_oracle/models_v6/ from Google Drive")
+    else:
+        print("  1. Download the models_v6 folder from the Colab file explorer on the left")
     print("  2. Copy all files into:  crypto-oracle-mcp/data/")
     print("  3. Run:  python live_demo_engine.py")
 

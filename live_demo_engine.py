@@ -245,7 +245,29 @@ def fetch_ticker_top_30():
     return STABLE_BASKET_COINS
 
 def fetch_klines(symbol, limit=1000):
-    """Fetch recent klines from production."""
+    """Fetch recent klines from MEXC (bypassing Binance geo-block), with Binance fallback."""
+    # Try MEXC first
+    try:
+        url = "https://api.mexc.com/api/v3/klines"
+        params = {"symbol": symbol, "interval": "1m", "limit": limit}
+        r = requests.get(url, params=params, timeout=15)
+        r.raise_for_status()
+        data = r.json()
+        if isinstance(data, list):
+            candles = []
+            for k in data:
+                candles.append({
+                    "timestamp": int(k[0]),
+                    "open": float(k[1]), "high": float(k[2]),
+                    "low": float(k[3]), "close": float(k[4]),
+                    "volume": float(k[5]),
+                    "taker_buy_volume": float(k[9]),
+                })
+            return candles
+    except Exception as e:
+        print(f"  [Warning] MEXC kline fetch failed for {symbol}: {e}")
+
+    # Fallback to Binance Futures API
     url = f"{PROD_BASE}/fapi/v1/klines"
     params = {"symbol": symbol, "interval": "1m", "limit": limit}
     r = requests.get(url, params=params, timeout=15)
