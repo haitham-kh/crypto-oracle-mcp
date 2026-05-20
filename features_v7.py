@@ -5,7 +5,7 @@ Adds contextual liquidation sweep features using real Perpetual Funding Rates.
 V7 total: 130 (V6) + 6 (V7-extras) = 136 features.
 """
 import numpy as np
-from features_v6 import FEATURE_NAMES_V6, build_v6_features, _roll_std
+from features_v6 import FEATURE_NAMES_V6, FEATURE_NAMES_V6_EXTRA, build_v6_features, _roll_std
 
 FEATURE_NAMES_V7_EXTRA = [
     "funding_rate_current",       # Forward-filled most recent funding rate
@@ -65,8 +65,8 @@ def build_v7_features(close, high, low, volume, ofi, tbv, ts_ms, atr_arr, fundin
     fund_z = (fund_current - fund_mean) / fund_std
     
     # 4. Extract V6 sweep flags and volume
-    bull_idx = FEATURE_NAMES_V6.index("sweep_bull_flag")
-    bear_idx = FEATURE_NAMES_V6.index("sweep_bear_flag")
+    bull_idx = FEATURE_NAMES_V6_EXTRA.index("sweep_bull_flag")
+    bear_idx = FEATURE_NAMES_V6_EXTRA.index("sweep_bear_flag")
     
     sweep_bull = F_v6[:, bull_idx]
     sweep_bear = F_v6[:, bear_idx]
