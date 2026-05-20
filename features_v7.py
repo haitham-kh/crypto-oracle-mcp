@@ -55,7 +55,7 @@ def build_v7_features(close, high, low, volume, ofi, tbv, ts_ms, atr_arr, fundin
     
     fund_mean = np.zeros(n, dtype=np.float32)
     if n > window_30d:
-        fund_mean[window_30d:] = (cum_fund[window_30d+1:] - cum_fund[:-window_30d-1]) / window_30d
+        fund_mean[window_30d:] = (cum_fund[window_30d+1:] - cum_fund[1:-window_30d]) / window_30d
     for i in range(1, min(window_30d, n)):
         fund_mean[i] = cum_fund[i+1] / i
         
@@ -88,7 +88,7 @@ def build_v7_features(close, high, low, volume, ofi, tbv, ts_ms, atr_arr, fundin
     cum_vol = np.zeros(n + 1, dtype=np.float64)
     cum_vol[1:] = np.cumsum(volume)
     if n > 60:
-        vol_mean[60:] = (cum_vol[61:] - cum_vol[:-60]) / 60
+        vol_mean[60:] = (cum_vol[61:] - cum_vol[1:-60]) / 60
     for i in range(1, min(60, n)):
         vol_mean[i] = cum_vol[i+1] / i
     vol_mean = np.where(vol_mean < 1e-8, 1.0, vol_mean)
