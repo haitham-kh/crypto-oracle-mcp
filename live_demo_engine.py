@@ -26,7 +26,7 @@ from trading_config import (
     HORIZON_REGIME_EV_SCALE, BTC_QUIET_4H_THRESHOLD, BTC_QUIET_EV_MULTIPLIER
 )
 from features_v5 import FEATURE_NAMES_V5, build_v5_full
-from features_v6 import FEATURE_NAMES_V6_EXTRA, build_v6_features
+from features_v7 import FEATURE_NAMES_V7_EXTRA, build_v7_features
 from regime_filter import classify_regime
 from test_oos_btc_v5 import build_sim_basket_state, _as_compact_arrays, load_v5_models
 from train_ev_model_v2 import build_features_v2
@@ -60,13 +60,13 @@ ALLOCATED_MARGIN_PER_TRADE = 300.0  # $300 USDT margin per position
 LOOSEN_MODE = False
 ALLOW_HALT_REGIMES = False           # Do not trade in CHAOS / LOW_LIQUIDITY regimes
 
-# V6 blending weights (user-specified: V6 is 70% of the decision)
-V6_WEIGHT = 0.70
+# V7 blending weights (user-specified: V7 is 70% of the decision)
+V7_WEIGHT = 0.70
 V5_WEIGHT = 0.30
-# V6 micro-gate: require V6 micro-model agreement (probability > this)
-V6_MICRO_GATE_THRESHOLD = 0.50
-# Set to False before V6 models are trained; True after train_v6.py has run.
-V6_MODELS_AVAILABLE = False
+# V7 micro-gate: require V7 micro-model agreement (probability > this)
+V7_MICRO_GATE_THRESHOLD = 0.50
+# Set to False before V7 models are trained; True after colab_v7_train.py has run.
+V7_MODELS_AVAILABLE = False
 
 COIN_ONEHOT_NAMES = [
     "AAVEUSDT", "ADAUSDT", "AVAXUSDT", "BNBUSDT", "BTCUSDT",
@@ -74,7 +74,7 @@ COIN_ONEHOT_NAMES = [
     "SOLUSDT", "UNIUSDT", "WIFUSDT", "XRPUSDT",
 ]
 ALL_FEATURE_NAMES    = FEATURE_NAMES_V5 + [f"coin_is_{s}" for s in COIN_ONEHOT_NAMES]  # 94 features
-ALL_FEATURE_NAMES_V6 = ALL_FEATURE_NAMES + FEATURE_NAMES_V6_EXTRA                     # 130 features
+ALL_FEATURE_NAMES_V7 = ALL_FEATURE_NAMES + FEATURE_NAMES_V7_EXTRA                     # 130+ features
 
 # Global metrics for Dashboard
 DASHBOARD_DATA = {
@@ -87,25 +87,25 @@ DASHBOARD_DATA = {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# V6 Model Loader
+# V7 Model Loader
 # ─────────────────────────────────────────────────────────────────────────────
 
-def load_v6_models():
-    """Load V6_full classifier + calibrator models for all horizons/directions.
+def load_v7_models():
+    """Load V7_full classifier + calibrator models for all horizons/directions.
 
     Returns a nested dict:
-        models_v6[h][direction] = {"clf": XGBModel, "calib": IsotonicRegression,
+        models_v7[h][direction] = {"clf": XGBModel, "calib": IsotonicRegression,
                                    "p_threshold": float}
-    Also returns v6_micro_models[h][direction] = {"clf", "calib", "p_threshold"}
+    Also returns v7_micro_models[h][direction] = {"clf", "calib", "p_threshold"}
 
     If any model file is missing, returns None (caller should set
-    V6_MODELS_AVAILABLE = False and fall back to V5-only).
+    V7_MODELS_AVAILABLE = False and fall back to V5-only).
     """
     import pickle
     data_dir = os.path.join(os.path.dirname(__file__), "data")
-    meta_path = os.path.join(data_dir, "v6_meta.json")
+    meta_path = os.path.join(data_dir, "v7_meta.json")
     if not os.path.exists(meta_path):
-        print("[V6] data/v6_meta.json not found — V6 disabled. Run train_v6.py first.")
+        print("[V7] data/v7_meta.json not found — V7 disabled. Run colab_v7_train.py first.")
         return None, None
 
     with open(meta_path) as f:
@@ -121,11 +121,11 @@ def load_v6_models():
         for direction in ["long", "short"]:
             for tag, store in [("full", full_models), ("micro", micro_models)]:
                 clf_path   = os.path.join(os.path.dirname(__file__),
-                                          f"data/v6_{tag}_clf_{direction}_h{h}.json")
+                                          f"data/v7_{tag}_clf_{direction}_h{h}.json")
                 calib_path = os.path.join(os.path.dirname(__file__),
-                                          f"data/v6_{tag}_calib_{direction}_h{h}.pkl")
+                                          f"data/v7_{tag}_calib_{direction}_h{h}.pkl")
                 if not os.path.exists(clf_path) or not os.path.exists(calib_path):
-                    print(f"[V6] Missing: {clf_path} or {calib_path}")
+                    print(f"[V7] Missing: {clf_path} or {calib_path}")
                     return None, None
 
                 clf = xgb.Booster()
@@ -142,7 +142,7 @@ def load_v6_models():
 
                 store[h][direction] = {"clf": clf, "calib": calib, "p_threshold": float(p_thr)}
 
-    print("[V6] Models loaded successfully (full + micro).")
+    print("[V7] Models loaded successfully (full + micro).")
     return full_models, micro_models
 
 # ── Binance Futures API Client ──────────────────────────────────────────────────
@@ -359,7 +359,7 @@ def fetch_live_perp_dfs(symbol):
 # ── Feature & Prediction Helpers ─────────────────────────────────────────────────
 
 def predict_coin(symbol, candles, btc_candles, models, meta_feature_names, basket_state, active_min_ev,
-                 v6_full_models=None, v6_micro_models=None):
+                 v7_full_models=None, v7_micro_models=None):
     """Build features and predict direction for the last bar of the symbol."""
     n_c = len(candles)
     ts = np.fromiter((c["timestamp"] for c in candles), dtype=np.float64, count=n_c)
@@ -389,22 +389,30 @@ def predict_coin(symbol, candles, btc_candles, models, meta_feature_names, baske
         
     F_full = np.hstack([F_feats, onehot]).astype(np.float32)  # (n, 94)
 
-    # ── V6 feature block ──────────────────────────────────────────────────────
-    F_v6_block = None
-    if V6_MODELS_AVAILABLE and v6_full_models is not None:
+    # ── V7 feature block ──────────────────────────────────────────────────────
+    F_v7_block = None
+    if V7_MODELS_AVAILABLE and v7_full_models is not None:
         try:
-            F_v6_block = build_v6_features(
+            # We need to extract funding_df for V7. We cached it in LIVE_PERP_CACHE.
+            fund_ts, fund_rt = np.array([], dtype=np.int64), np.array([], dtype=np.float64)
+            cached_perp = LIVE_PERP_CACHE.get(symbol)
+            if cached_perp and cached_perp[0] is not None:
+                funding_df = cached_perp[0]
+                fund_ts = funding_df["ts_ms"].to_numpy().astype(np.int64)
+                fund_rt = funding_df["funding_rate"].to_numpy().astype(np.float64)
+
+            F_v7_block = build_v7_features(
                 cl.astype(np.float64), hi.astype(np.float64), lo.astype(np.float64),
                 vo.astype(np.float64), ofi.astype(np.float64), tbv.astype(np.float64),
-                ts_int, atr.astype(np.float64)
-            )  # (n, 36)
-            F_v6_full = np.hstack([F_full, F_v6_block]).astype(np.float32)  # (n, 130)
+                ts_int, atr.astype(np.float64), fund_ts, fund_rt
+            )  # (n, V7_EXTRA)
+            F_v7_full = np.hstack([F_full, F_v7_block]).astype(np.float32)  # (n, 130+)
         except Exception as e:
-            print(f"  [V6] Feature build error for {symbol}: {e}")
-            F_v6_block = None
-            F_v6_full  = None
+            print(f"  [V7] Feature build error for {symbol}: {e}")
+            F_v7_block = None
+            F_v7_full  = None
     else:
-        F_v6_full = None
+        F_v7_full = None
 
     # Extract latest row (V5 — always available)
     latest_row = F_full[-1:]
@@ -426,9 +434,9 @@ def predict_coin(symbol, candles, btc_candles, models, meta_feature_names, baske
     candidates = []
     horizon_data = {}
 
-    # V6 latest row (130 features) — used for blending if available
-    latest_v6_full  = F_v6_full[-1:] if F_v6_full is not None else None
-    latest_v6_only  = F_v6_block[-1:] if F_v6_block is not None else None
+    # V7 latest row (130+ features) — used for blending if available
+    latest_v7_full  = F_v7_full[-1:] if F_v7_full is not None else None
+    latest_v7_only  = F_v7_block[-1:] if F_v7_block is not None else None
 
     for h in [60, 720]:
         horizon_data[h] = {}
@@ -440,43 +448,43 @@ def predict_coin(symbol, candles, btc_candles, models, meta_feature_names, baske
             p_v5_cal = float(m["calib"].predict(p_v5_raw)[0])
             mu_hat   = float(m["reg"].inplace_predict(latest_row)[0])
 
-            # ── V6 blending (70/30) ───────────────────────────────────────────
-            if (V6_MODELS_AVAILABLE
-                    and v6_full_models is not None
-                    and latest_v6_full is not None
-                    and h in v6_full_models
-                    and direction in v6_full_models[h]):
+            # ── V7 blending (70/30) ───────────────────────────────────────────
+            if (V7_MODELS_AVAILABLE
+                    and v7_full_models is not None
+                    and latest_v7_full is not None
+                    and h in v7_full_models
+                    and direction in v7_full_models[h]):
                 try:
-                    mv6 = v6_full_models[h][direction]
-                    p_v6_raw = mv6["clf"].inplace_predict(latest_v6_full)
-                    p_v6_cal = float(mv6["calib"].predict(p_v6_raw)[0])
+                    mv7 = v7_full_models[h][direction]
+                    p_v7_raw = mv7["clf"].inplace_predict(latest_v7_full)
+                    p_v7_cal = float(mv7["calib"].predict(p_v7_raw)[0])
 
-                    # V6 micro gate — require V6 micro to agree
+                    # V7 micro gate — require V7 micro to agree
                     gate_pass = True
-                    if (v6_micro_models is not None
-                            and latest_v6_only is not None
-                            and h in v6_micro_models
-                            and direction in v6_micro_models[h]):
-                        mv6m = v6_micro_models[h][direction]
-                        p_micro_raw = mv6m["clf"].inplace_predict(latest_v6_only)
-                        p_micro_cal = float(mv6m["calib"].predict(p_micro_raw)[0])
-                        gate_pass = p_micro_cal >= V6_MICRO_GATE_THRESHOLD
+                    if (v7_micro_models is not None
+                            and latest_v7_only is not None
+                            and h in v7_micro_models
+                            and direction in v7_micro_models[h]):
+                        mv7m = v7_micro_models[h][direction]
+                        p_micro_raw = mv7m["clf"].inplace_predict(latest_v7_only)
+                        p_micro_cal = float(mv7m["calib"].predict(p_micro_raw)[0])
+                        gate_pass = p_micro_cal >= V7_MICRO_GATE_THRESHOLD
 
                     if gate_pass:
-                        # User-specified 70/30 blend: V6 has 70% weight
-                        p_cal = V5_WEIGHT * p_v5_cal + V6_WEIGHT * p_v6_cal
+                        # User-specified 70/30 blend: V7 has 70% weight
+                        p_cal = V5_WEIGHT * p_v5_cal + V7_WEIGHT * p_v7_cal
                         # Effective threshold: weighted blend of both thresholds
                         thr_model = (V5_WEIGHT * float(m["p_threshold"])
-                                     + V6_WEIGHT * float(mv6["p_threshold"]))
+                                     + V7_WEIGHT * float(mv7["p_threshold"]))
                     else:
-                        # V6 micro gate failed — fall back to V5 alone
+                        # V7 micro gate failed — fall back to V5 alone
                         p_cal     = p_v5_cal
                         thr_model = float(m["p_threshold"])
                 except Exception:
                     p_cal     = p_v5_cal
                     thr_model = float(m["p_threshold"])
             else:
-                # V6 not available — use V5 only
+                # V7 not available — use V5 only
                 p_cal     = p_v5_cal
                 thr_model = float(m["p_threshold"])
 
@@ -807,7 +815,7 @@ def analyze_single_coin(symbol, candles, btc_candles, models, meta_feature_names
         LIVE_PERP_CACHE[symbol] = (funding_df, metrics_df)  # atomic dict assignment
 
         pred = predict_coin(symbol, candles, btc_candles, models, meta_feature_names, basket_state, active_min_ev,
-                            v6_full_models=v6_full_models, v6_micro_models=v6_micro_models)
+                            v7_full_models=v7_full_models, v7_micro_models=v7_micro_models)
         return {"symbol": symbol, "pred": pred, "rule": rule, "status": pred["status"]}
     except Exception as e:
         return {"symbol": symbol, "error": str(e)[:120], "status": "ERROR"}
