@@ -90,122 +90,221 @@ if DRIVE_AVAILABLE:
     os.makedirs(DRIVE_MODELS_DIR,    exist_ok=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SECTION 4 — BINANCE KLINE DOWNLOADER (sequential, rate-limit safe)
+# SECTION 4 — KLINE DOWNLOADER
+#   Strategy (in order of priority):
+#     1. data.binance.vision  — Binance's public AWS S3 bucket.
+#                               Monthly + daily ZIP files. No API key.
+#                               NOT geo-blocked (it's static S3, not the API).
+#                               Blazing fast: one ZIP per month vs 1000s of calls.
+#     2. MEXC public API      — Binance-compatible format, not geo-restricted.
+#                               Used only for bars not yet on vision (today's data).
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Binance Spot API works from Google Cloud / Colab.
-# Futures API (fapi.binance.com) is often blocked by GCP IP ranges.
-BINANCE_SPOT_BASE = "https://api.binance.com"
-BARS_PER_REQUEST  = 1000   # Spot API max per call
-REQUEST_DELAY     = 0.10   # seconds between calls
+import io, zipfile, csv as _csv
+
+VISION_BASE = "https://data.binance.vision"
+MEXC_BASE   = "https://api.mexc.com"
+REQUEST_DELAY = 0.05   # seconds between MEXC calls (vision has no rate limit)
 
 
-def _test_binance_connectivity():
-    """Quick connectivity test — runs before the main download loop."""
-    print("  Testing Binance Spot API connectivity...", flush=True)
+def _parse_vision_csv(raw_bytes):
+    """Parse a Binance Vision CSV (bytes) into a list of bar dicts."""
+    rows = []
+    text = raw_bytes.decode("utf-8", errors="replace")
+    reader = _csv.reader(text.splitlines())
+    for line in reader:
+        if len(line) < 10:
+            continue
+        try:
+            rows.append({
+                "timestamp_ms":     int(line[0]),
+                "open":             float(line[1]),
+                "high":             float(line[2]),
+                "low":              float(line[3]),
+                "close":            float(line[4]),
+                "volume":           float(line[5]),
+                "taker_buy_volume": float(line[9]),
+            })
+        except (ValueError, IndexError):
+            continue
+    return rows
+
+
+def _dl_vision_zip(url, label=""):
+    """Download one vision ZIP and return parsed bars, or None on failure."""
     try:
-        r = requests.get(
-            f"{BINANCE_SPOT_BASE}/api/v3/klines",
-            params={"symbol": "BTCUSDT", "interval": "1m", "limit": 2},
-            timeout=10,
-        )
-        if r.status_code == 200 and isinstance(r.json(), list):
-            print("  Binance Spot API: OK", flush=True)
-            return True
-        else:
-            print(f"  Binance Spot API returned: {r.status_code} — {r.text[:200]}", flush=True)
-            return False
+        r = requests.get(url, timeout=90)
+        if r.status_code == 404:
+            return None   # file doesn't exist yet (current partial month)
+        if r.status_code != 200:
+            print(f"    vision {label}: HTTP {r.status_code}", flush=True)
+            return None
+        with zipfile.ZipFile(io.BytesIO(r.content)) as zf:
+            csv_name = next(n for n in zf.namelist() if n.endswith(".csv"))
+            with zf.open(csv_name) as f:
+                return _parse_vision_csv(f.read())
     except Exception as e:
-        print(f"  Binance Spot API connection failed: {e}", flush=True)
-        return False
+        print(f"    vision {label}: {e}", flush=True)
+        return None
 
 
-def _fetch_page(symbol, start_ms, limit=1000):
-    """Fetch one page of up to 1000 bars from Binance Spot. Returns list or []."""
-    for attempt in range(5):
+def _fetch_mexc_page(symbol, start_ms, limit=1000):
+    """Fetch one page from MEXC public klines (Binance-compatible). Returns list of bar dicts."""
+    for attempt in range(4):
         try:
             r = requests.get(
-                f"{BINANCE_SPOT_BASE}/api/v3/klines",
+                f"{MEXC_BASE}/api/v3/klines",
                 params={"symbol": symbol, "interval": "1m",
                         "startTime": start_ms, "limit": limit},
-                timeout=20,
+                timeout=25,
             )
             if r.status_code == 429:
-                wait = int(r.headers.get("Retry-After", 60))
-                print(f"    rate-limit 429 — sleeping {wait}s", flush=True)
-                time.sleep(wait)
+                time.sleep(30)
                 continue
             if r.status_code != 200:
-                print(f"    HTTP {r.status_code}: {r.text[:200]}", flush=True)
                 time.sleep(2 ** attempt)
                 continue
             data = r.json()
-            # Binance error: {"code": -1xxx, "msg": "..."}
             if isinstance(data, dict):
-                print(f"    Binance error: {data.get('msg', data)}", flush=True)
+                print(f"    MEXC error: {data}", flush=True)
                 time.sleep(2 ** attempt)
                 continue
-            return data   # list of kline arrays
+            return [{
+                "timestamp_ms":     int(row[0]),
+                "open":             float(row[1]),
+                "high":             float(row[2]),
+                "low":              float(row[3]),
+                "close":            float(row[4]),
+                "volume":           float(row[5]),
+                "taker_buy_volume": float(row[9]),
+            } for row in data]
         except Exception as e:
-            print(f"    attempt {attempt+1} failed: {e}", flush=True)
             time.sleep(2 ** attempt)
     return []
 
 
+def _test_connectivity():
+    """Test both data sources. Returns (vision_ok, mexc_ok)."""
+    vision_ok = False
+    mexc_ok   = False
+
+    print("  Testing data.binance.vision (S3)...", flush=True)
+    try:
+        r = requests.head(
+            f"{VISION_BASE}/data/spot/monthly/klines/BTCUSDT/1m/BTCUSDT-1m-2024-01.zip",
+            timeout=15,
+        )
+        if r.status_code in (200, 301, 302):
+            print("  data.binance.vision: OK", flush=True)
+            vision_ok = True
+        else:
+            print(f"  data.binance.vision: HTTP {r.status_code}", flush=True)
+    except Exception as e:
+        print(f"  data.binance.vision: {e}", flush=True)
+
+    print("  Testing MEXC API...", flush=True)
+    try:
+        r = requests.get(
+            f"{MEXC_BASE}/api/v3/klines",
+            params={"symbol": "BTCUSDT", "interval": "1m", "limit": 2},
+            timeout=10,
+        )
+        if r.status_code == 200 and isinstance(r.json(), list):
+            print("  MEXC API: OK", flush=True)
+            mexc_ok = True
+        else:
+            print(f"  MEXC API: HTTP {r.status_code}", flush=True)
+    except Exception as e:
+        print(f"  MEXC API: {e}", flush=True)
+
+    return vision_ok, mexc_ok
+
+
 def download_klines(symbol, start_ms, end_ms):
-    """Download full history by walking forward page-by-page. No threading."""
+    """
+    Download 1m bars for [start_ms, end_ms).
+    1. Bulk monthly ZIPs from data.binance.vision  (fast, no geo-block)
+    2. Daily ZIPs for recent days not yet in monthly archive
+    3. MEXC API for today's bars (not yet on vision)
+    Returns list of bar dicts sorted by timestamp_ms.
+    """
     all_rows = []
-    cur = start_ms
-    total_expected = (end_ms - start_ms) // 60_000
-    last_print_n = 0
+    start_dt = datetime.datetime.utcfromtimestamp(start_ms / 1000)
+    end_dt   = datetime.datetime.utcfromtimestamp(end_ms   / 1000)
+    today    = datetime.datetime.utcnow()
 
-    while cur < end_ms:
-        page = _fetch_page(symbol, cur, BARS_PER_REQUEST)
-        if not page:
-            # One longer retry
-            time.sleep(10)
-            page = _fetch_page(symbol, cur, BARS_PER_REQUEST)
+    # ── 1. Monthly ZIPs ────────────────────────────────────────────────────────
+    yr, mo = start_dt.year, start_dt.month
+    while (yr, mo) < (today.year, today.month):
+        fname = f"{symbol}-1m-{yr}-{mo:02d}.zip"
+        url   = f"{VISION_BASE}/data/spot/monthly/klines/{symbol}/1m/{fname}"
+        rows  = _dl_vision_zip(url, fname)
+        if rows is not None:
+            rows = [r for r in rows if start_ms <= r["timestamp_ms"] < end_ms]
+            all_rows.extend(rows)
+            print(f"    {symbol}: monthly {yr}-{mo:02d} → {len(rows):,} bars", flush=True)
+        else:
+            print(f"    {symbol}: monthly {yr}-{mo:02d} not on vision yet", flush=True)
+        mo += 1
+        if mo > 12:
+            yr += 1; mo = 1
+
+    # ── 2. Daily ZIPs for current month ───────────────────────────────────────
+    last_ms = (all_rows[-1]["timestamp_ms"] + 60_000) if all_rows else start_ms
+    if last_ms < end_ms:
+        cur_day = datetime.datetime.utcfromtimestamp(last_ms / 1000).replace(
+            hour=0, minute=0, second=0, microsecond=0)
+        while cur_day.date() < today.date():
+            fname = f"{symbol}-1m-{cur_day.year}-{cur_day.month:02d}-{cur_day.day:02d}.zip"
+            url   = f"{VISION_BASE}/data/spot/daily/klines/{symbol}/1m/{fname}"
+            rows  = _dl_vision_zip(url, fname)
+            if rows:
+                rows = [r for r in rows if last_ms <= r["timestamp_ms"] < end_ms]
+                if rows:
+                    all_rows.extend(rows)
+                    last_ms = rows[-1]["timestamp_ms"] + 60_000
+            cur_day += datetime.timedelta(days=1)
+
+    # ── 3. MEXC API for today's bars (not yet uploaded to vision) ─────────────
+    last_ms = (all_rows[-1]["timestamp_ms"] + 60_000) if all_rows else start_ms
+    if last_ms < end_ms:
+        print(f"    {symbol}: fetching recent bars via MEXC ({datetime.datetime.utcfromtimestamp(last_ms/1000).strftime('%Y-%m-%d %H:%M')} → now)...", flush=True)
+        cur = last_ms
+        while cur < end_ms:
+            page = _fetch_mexc_page(symbol, cur)
             if not page:
-                print(f"    [{symbol}] gave up at {len(all_rows):,} bars — stopping early", flush=True)
                 break
+            valid = [r for r in page if last_ms <= r["timestamp_ms"] < end_ms]
+            all_rows.extend(valid)
+            if not valid:
+                break
+            cur = page[-1]["timestamp_ms"] + 60_000
+            last_ms = cur
+            time.sleep(REQUEST_DELAY)
 
-        all_rows.extend(page)
-        cur = int(page[-1][0]) + 60_000   # advance past last bar's open time
-
-        fetched = len(all_rows)
-        if fetched - last_print_n >= 50_000:
-            pct = fetched / max(total_expected, 1) * 100
-            print(f"    {symbol}: {fetched:,}/{total_expected:,} bars  ({pct:.0f}%)", flush=True)
-            last_print_n = fetched
-
-        time.sleep(REQUEST_DELAY)
-
-    # Trim anything past end_ms
-    return [{
-        "timestamp_ms":     int(r[0]),
-        "open":             float(r[1]),
-        "high":             float(r[2]),
-        "low":              float(r[3]),
-        "close":            float(r[4]),
-        "volume":           float(r[5]),
-        "taker_buy_volume": float(r[9]),
-    } for r in all_rows if int(r[0]) < end_ms]
+    # De-duplicate and sort
+    seen = set()
+    unique = []
+    for r in all_rows:
+        if r["timestamp_ms"] not in seen:
+            seen.add(r["timestamp_ms"])
+            unique.append(r)
+    unique.sort(key=lambda r: r["timestamp_ms"])
+    return unique
 
 
 def download_all_coins(coins, months, out_dir):
-    """Download all coins sequentially — reliable and rate-limit safe."""
+    """Download all coins sequentially using vision + MEXC."""
     end_dt        = datetime.datetime.utcnow().replace(second=0, microsecond=0)
     start_dt      = end_dt - datetime.timedelta(days=months * 30)
     start_ms      = int(start_dt.timestamp() * 1000)
     end_ms        = int(end_dt.timestamp() * 1000)
     expected_bars = (end_ms - start_ms) // 60_000
-    pages_per_coin = math.ceil(expected_bars / BARS_PER_REQUEST)
-    est_min_each   = pages_per_coin * REQUEST_DELAY / 60
 
     print(f"\n{'='*65}")
     print(f"  DOWNLOADING {len(coins)} coins  |  {months}m  |  ~{expected_bars:,} bars/coin")
-    print(f"  Period : {start_dt.date()} -> {end_dt.date()}")
-    print(f"  Est.   : ~{est_min_each:.0f} min/coin  x  {len(coins)} coins  =  ~{est_min_each*len(coins):.0f} min total")
+    print(f"  Period: {start_dt.date()} -> {end_dt.date()}")
+    print(f"  Source: data.binance.vision (S3) + MEXC fallback")
     print(f"{'='*65}\n")
 
     os.makedirs(out_dir, exist_ok=True)
@@ -233,7 +332,7 @@ def download_all_coins(coins, months, out_dir):
         candles = download_klines(sym, start_ms, end_ms)
 
         if not candles:
-            print(f"  {sym}: FAILED — skipping this coin")
+            print(f"  {sym}: FAILED — no bars returned. Skipping.")
             continue
 
         df = pl.DataFrame(candles).sort("timestamp_ms")
@@ -241,7 +340,8 @@ def download_all_coins(coins, months, out_dir):
         df.write_parquet(out_path)
         elapsed = (time.time() - t0) / 60
         sz = os.path.getsize(out_path) / 1e6
-        print(f"  {sym}: done  {len(candles):,} bars  {sz:.0f}MB  ({elapsed:.1f} min)", flush=True)
+        cov = len(candles) / max(expected_bars, 1) * 100
+        print(f"  {sym}: done  {len(candles):,} bars  {sz:.0f}MB  coverage={cov:.0f}%  ({elapsed:.1f} min)", flush=True)
         ohlcv_paths[sym] = out_path
 
     print(f"\nDownload complete: {len(ohlcv_paths)}/{len(coins)} coins ready.")
@@ -683,10 +783,13 @@ def main():
     _check_gpu()
 
     # Step 1: Check connectivity + Download OHLCV
-    if not _test_binance_connectivity():
-        print("\n[ERROR] Cannot reach Binance Spot API from this runtime.")
-        print("  Try: Runtime > Disconnect and delete runtime, then reconnect.")
+    vision_ok, mexc_ok = _test_connectivity()
+    if not vision_ok and not mexc_ok:
+        print("\n[ERROR] Both data.binance.vision and MEXC API are unreachable.")
+        print("  This is unusual — check your Colab internet connection.")
         return
+    if not vision_ok:
+        print("  [WARN] data.binance.vision unreachable — will use MEXC only (slower)", flush=True)
     ohlcv_dir   = os.path.join(LOCAL_DATA_DIR, "ohlcv")
     ohlcv_paths = download_all_coins(COINS, MONTHS_HISTORY, ohlcv_dir)
 
