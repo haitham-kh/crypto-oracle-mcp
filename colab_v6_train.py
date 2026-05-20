@@ -107,8 +107,21 @@ MEXC_BASE   = "https://api.mexc.com"
 REQUEST_DELAY = 0.05   # seconds between MEXC calls (vision has no rate limit)
 
 
+# Threshold: timestamps below this are in ms; at/above this are in microseconds.
+# Binance Vision switched from ms to us timestamps on 2025-01-01.
+_MS_THRESHOLD = 2_000_000_000_000   # 2 trillion ms ≈ year 2033 — safe cutoff
+
+
+def _to_ms(ts_raw):
+    """Normalise a Vision timestamp to milliseconds regardless of ms/us format."""
+    ts = int(ts_raw)
+    return ts // 1_000 if ts > _MS_THRESHOLD else ts
+
+
 def _parse_vision_csv(raw_bytes):
-    """Parse a Binance Vision CSV (bytes) into a list of bar dicts."""
+    """Parse a Binance Vision CSV (bytes) into a list of bar dicts.
+    Handles both the old ms format (pre-2025) and the new us format (2025+).
+    """
     rows = []
     text = raw_bytes.decode("utf-8", errors="replace")
     reader = _csv.reader(text.splitlines())
@@ -117,7 +130,7 @@ def _parse_vision_csv(raw_bytes):
             continue
         try:
             rows.append({
-                "timestamp_ms":     int(line[0]),
+                "timestamp_ms":     _to_ms(line[0]),   # normalised to ms
                 "open":             float(line[1]),
                 "high":             float(line[2]),
                 "low":              float(line[3]),
@@ -131,11 +144,11 @@ def _parse_vision_csv(raw_bytes):
 
 
 def _dl_vision_zip(url, label=""):
-    """Download one vision ZIP and return parsed bars, or None on failure."""
+    """Download one vision ZIP and return parsed bars, or None on 404/failure."""
     try:
         r = requests.get(url, timeout=90)
         if r.status_code == 404:
-            return None   # file doesn't exist yet (current partial month)
+            return None   # file doesn't exist
         if r.status_code != 200:
             print(f"    vision {label}: HTTP {r.status_code}", flush=True)
             return None
@@ -170,7 +183,7 @@ def _fetch_mexc_page(symbol, start_ms, limit=1000):
                 time.sleep(2 ** attempt)
                 continue
             return [{
-                "timestamp_ms":     int(row[0]),
+                "timestamp_ms":     int(row[0]),   # MEXC is always ms
                 "open":             float(row[1]),
                 "high":             float(row[2]),
                 "low":              float(row[3]),
@@ -223,63 +236,86 @@ def _test_connectivity():
 def download_klines(symbol, start_ms, end_ms):
     """
     Download 1m bars for [start_ms, end_ms).
-    1. Bulk monthly ZIPs from data.binance.vision  (fast, no geo-block)
-    2. Daily ZIPs for recent days not yet in monthly archive
-    3. MEXC API for today's bars (not yet on vision)
-    Returns list of bar dicts sorted by timestamp_ms.
+
+    Strategy:
+      1. Monthly ZIPs from data.binance.vision  — fast, no geo-block.
+         NOTE: monthly ZIPs for 2025+ are often empty/delayed on vision;
+         the daily fallback below fills those gaps automatically.
+      2. Daily ZIPs from data.binance.vision    — covers ALL missing days
+         (not just the current month). This is the main data source for 2025+.
+      3. MEXC API                               — fills any bars still missing
+         (e.g. today's bars not yet uploaded to vision).
+
+    Timestamps: Vision switched from ms to microseconds on 2025-01-01.
+    _to_ms() normalises both formats to milliseconds before any comparison.
     """
     all_rows = []
     start_dt = datetime.datetime.utcfromtimestamp(start_ms / 1000)
-    end_dt   = datetime.datetime.utcfromtimestamp(end_ms   / 1000)
     today    = datetime.datetime.utcnow()
 
-    # ── 1. Monthly ZIPs ────────────────────────────────────────────────────────
+    # ── 1. Monthly ZIPs (2024 data is reliably here) ──────────────────────────
     yr, mo = start_dt.year, start_dt.month
     while (yr, mo) < (today.year, today.month):
         fname = f"{symbol}-1m-{yr}-{mo:02d}.zip"
         url   = f"{VISION_BASE}/data/spot/monthly/klines/{symbol}/1m/{fname}"
         rows  = _dl_vision_zip(url, fname)
-        if rows is not None:
+        if rows:
             rows = [r for r in rows if start_ms <= r["timestamp_ms"] < end_ms]
-            all_rows.extend(rows)
-            print(f"    {symbol}: monthly {yr}-{mo:02d} → {len(rows):,} bars", flush=True)
-        else:
-            print(f"    {symbol}: monthly {yr}-{mo:02d} not on vision yet", flush=True)
+            if rows:
+                all_rows.extend(rows)
+                print(f"    {symbol}: monthly {yr}-{mo:02d} → {len(rows):,} bars", flush=True)
+            else:
+                # File exists but all timestamps filtered out — skip to daily
+                print(f"    {symbol}: monthly {yr}-{mo:02d} empty after filter", flush=True)
+        # None = 404 (not uploaded yet) — daily fallback will cover this
         mo += 1
         if mo > 12:
             yr += 1; mo = 1
 
-    # ── 2. Daily ZIPs for current month ───────────────────────────────────────
-    last_ms = (all_rows[-1]["timestamp_ms"] + 60_000) if all_rows else start_ms
-    if last_ms < end_ms:
-        cur_day = datetime.datetime.utcfromtimestamp(last_ms / 1000).replace(
+    # ── 2. Daily ZIPs — covers ALL missing days since start ───────────────────
+    # Figure out which days we still need (any gap or everything from 2025-01)
+    covered_ms = set(r["timestamp_ms"] for r in all_rows)
+    last_covered = (max(covered_ms) if covered_ms else start_ms - 60_000)
+    next_needed_ms = last_covered + 60_000
+
+    if next_needed_ms < end_ms:
+        cur_day = datetime.datetime.utcfromtimestamp(next_needed_ms / 1000).replace(
             hour=0, minute=0, second=0, microsecond=0)
+        daily_added = 0
         while cur_day.date() < today.date():
             fname = f"{symbol}-1m-{cur_day.year}-{cur_day.month:02d}-{cur_day.day:02d}.zip"
             url   = f"{VISION_BASE}/data/spot/daily/klines/{symbol}/1m/{fname}"
             rows  = _dl_vision_zip(url, fname)
             if rows:
-                rows = [r for r in rows if last_ms <= r["timestamp_ms"] < end_ms]
+                rows = [r for r in rows
+                        if r["timestamp_ms"] not in covered_ms
+                        and start_ms <= r["timestamp_ms"] < end_ms]
                 if rows:
                     all_rows.extend(rows)
-                    last_ms = rows[-1]["timestamp_ms"] + 60_000
+                    covered_ms.update(r["timestamp_ms"] for r in rows)
+                    daily_added += len(rows)
             cur_day += datetime.timedelta(days=1)
+        if daily_added:
+            first_d = datetime.datetime.utcfromtimestamp(next_needed_ms/1000).strftime("%Y-%m-%d")
+            print(f"    {symbol}: daily ZIPs → +{daily_added:,} bars (from {first_d})", flush=True)
 
-    # ── 3. MEXC API for today's bars (not yet uploaded to vision) ─────────────
+    # ── 3. MEXC API — today's bars not yet on vision ─────────────────────────
+    all_rows.sort(key=lambda r: r["timestamp_ms"])
     last_ms = (all_rows[-1]["timestamp_ms"] + 60_000) if all_rows else start_ms
     if last_ms < end_ms:
-        print(f"    {symbol}: fetching recent bars via MEXC ({datetime.datetime.utcfromtimestamp(last_ms/1000).strftime('%Y-%m-%d %H:%M')} → now)...", flush=True)
+        print(f"    {symbol}: MEXC gap-fill "
+              f"({datetime.datetime.utcfromtimestamp(last_ms/1000).strftime('%Y-%m-%d %H:%M')} → now)...",
+              flush=True)
         cur = last_ms
         while cur < end_ms:
             page = _fetch_mexc_page(symbol, cur)
             if not page:
                 break
-            valid = [r for r in page if last_ms <= r["timestamp_ms"] < end_ms]
-            all_rows.extend(valid)
+            valid = [r for r in page if cur <= r["timestamp_ms"] < end_ms]
             if not valid:
                 break
+            all_rows.extend(valid)
             cur = page[-1]["timestamp_ms"] + 60_000
-            last_ms = cur
             time.sleep(REQUEST_DELAY)
 
     # De-duplicate and sort
