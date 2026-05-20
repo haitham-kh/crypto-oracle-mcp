@@ -542,7 +542,8 @@ def load_training_bundle(symbol, processed_dir, ohlcv_dir, funding_dir):
     pos = np.searchsorted(ts_f, ts, side="left")
     pos = np.clip(pos, 0, len(ts_f) - 1)
     ok  = np.abs(ts_f[pos] - ts) <= 5 * 60_000
-    F_v7_samp = np.zeros((n, N_V7_EXTRA), np.float32)
+    N_V7_BLOCK = F_v7_full.shape[1]
+    F_v7_samp = np.zeros((n, N_V7_BLOCK), np.float32)
     F_v7_samp[ok] = F_v7_full[pos[ok]]
     print(f"  [{symbol}] V7 match: {ok.sum()}/{n} ({ok.mean()*100:.1f}%)")
 
@@ -777,7 +778,7 @@ def main():
 
     anchor_ts   = float(ts_all.max())
     full_names  = [f"X{i}" for i in range(X_full.shape[1])]
-    micro_names = [f"V{i}" for i in range(N_V7_EXTRA)]
+    micro_names = [f"V{i}" for i in range(X_micro.shape[1])]
 
     # Step 5: Save models
     global DRIVE_MODELS_DIR
@@ -837,7 +838,7 @@ def main():
     meta = {
         "model_type": "xgboost_v7_full_plus_micro",
         "n_features_v7_full": X_full.shape[1],
-        "n_features_v7_micro": N_V7_EXTRA,
+        "n_features_v7_micro": X_micro.shape[1],
         "n_features_v5_full": N_V5_FULL,
         "v7_extra_feature_names": FEATURE_NAMES_V7_EXTRA,
         "horizons": HORIZONS, "training_coins": symbols_used,
