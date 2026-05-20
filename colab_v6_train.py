@@ -2,22 +2,17 @@
 ╔═══════════════════════════════════════════════════════════════════╗
 ║  CRYPTO ORACLE V6 — GOOGLE COLAB TRAINING SCRIPT                 ║
 ║                                                                   ║
-║  Paste this entire file into a single Colab cell and run it.     ║
-║  Or upload as colab_v6_train.py and run:  !python colab_v6_train.py  ║
+║  USAGE — paste this into a Colab cell and run:                   ║
 ║                                                                   ║
-║  What it does (fully automatic):                                  ║
-║    1. Installs dependencies                                       ║
-║    2. Mounts Google Drive (optional — for saving results)         ║
-║    3. Downloads 24m of 1m Binance Futures klines for 20 coins    ║
-║    4. Loads your existing training_data.parquets from Drive       ║
-║    5. Computes all 36 V6 features inline (self-contained)        ║
-║    6. Trains V6_full (130 feat) + V6_micro (36 feat) with XGBoost║
-║    7. Saves model files to Drive → copy back to your PC          ║
+║    !git clone https://github.com/haitham-kh/crypto-oracle-mcp    ║
+║    %cd crypto-oracle-mcp                                         ║
+║    !python colab_v6_train.py                                      ║
 ║                                                                   ║
-║  SETUP (do once before running):                                  ║
-║    - Upload your E-drive parquets to Google Drive at:            ║
-║      MyDrive/crypto_oracle/processed/                            ║
-║    - The script will auto-detect and use them                    ║
+║  That's it. The script:                                          ║
+║    1. Reads training data from training_data/ (already in repo)  ║
+║    2. Downloads 24m Binance klines for V6 features (free)        ║
+║    3. Trains V6_full + V6_micro on GPU                           ║
+║    4. Saves models to MyDrive/crypto_oracle/models_v6/           ║
 ╚═══════════════════════════════════════════════════════════════════╝
 """
 
@@ -25,6 +20,11 @@
 # SECTION 0 — CONFIG  (edit these if needed)
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Where to read training parquets from:
+#   Priority 1: training_data/ inside the cloned repo (already in GitHub — no upload needed!)
+#   Priority 2: Google Drive processed folder (fallback if running without git clone)
+#   Priority 3: /content/data/processed (last resort local)
+REPO_TRAINING_DIR   = "/content/crypto-oracle-mcp/training_data"  # after git clone
 DRIVE_PROCESSED_DIR = "/content/drive/MyDrive/crypto_oracle/processed"
 DRIVE_MODELS_DIR    = "/content/drive/MyDrive/crypto_oracle/models_v6"
 LOCAL_DATA_DIR      = "/content/data"
@@ -649,20 +649,21 @@ def main():
     ohlcv_dir = os.path.join(LOCAL_DATA_DIR, "ohlcv")
     ohlcv_paths = download_all_coins(COINS, MONTHS_HISTORY, ohlcv_dir)
 
-    # ── Step 2: Load training bundles ─────────────────────────────────────
-    processed_dir = DRIVE_PROCESSED_DIR
-    if not os.path.exists(processed_dir) or not glob.glob(os.path.join(processed_dir, "*_training_data.parquet")):
-        # Fallback: look in local data dir
-        alt = os.path.join(LOCAL_DATA_DIR, "processed")
-        if glob.glob(os.path.join(alt, "*_training_data.parquet")):
-            processed_dir = alt
-        else:
-            print(f"\n[ERROR] No training_data.parquet files found in:")
-            print(f"  {DRIVE_PROCESSED_DIR}")
-            print(f"  {alt}")
-            print("\nUpload your E-drive parquets to Google Drive at:")
-            print(f"  MyDrive/crypto_oracle/processed/")
-            return
+    # ── Step 2: Find training parquets ────────────────────────────────────
+    # Priority: repo training_data/ → Google Drive → local fallback
+    processed_dir = None
+    for candidate in [REPO_TRAINING_DIR, DRIVE_PROCESSED_DIR, os.path.join(LOCAL_DATA_DIR, "processed")]:
+        if os.path.exists(candidate) and glob.glob(os.path.join(candidate, "*_training_data.parquet")):
+            processed_dir = candidate
+            break
+
+    if processed_dir is None:
+        print("\n[ERROR] No training_data.parquet files found.")
+        print("  Tried:")
+        print(f"    {REPO_TRAINING_DIR}  (repo training_data/ — should be here after git clone)")
+        print(f"    {DRIVE_PROCESSED_DIR}  (Google Drive fallback)")
+        print("\n  Make sure you ran:  !git clone https://github.com/haitham-kh/crypto-oracle-mcp.git")
+        return
 
     print(f"\n[DATA] Processed dir: {processed_dir}")
     tp_files = glob.glob(os.path.join(processed_dir, "*_training_data.parquet"))

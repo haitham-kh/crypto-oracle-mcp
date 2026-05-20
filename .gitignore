@@ -18,7 +18,6 @@ __pycache__/
 
 # Data & large files (never commit raw data)
 *.csv
-*.parquet
 *.zip
 *.h5
 *.hdf5
@@ -26,6 +25,11 @@ data/
 logs/
 challenge_data/
 scratch/
+
+# training_data/ IS committed (pre-computed V5 features, ~230MB total)
+# Raw downloads and temp files are still excluded:
+ohlcv/
+*_1m_ohlcv.parquet
 
 # Model weights (download from Google Drive after Colab training)
 # Exception: we track meta JSON files (small, text-based)
