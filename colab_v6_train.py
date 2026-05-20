@@ -84,24 +84,48 @@ try:
 except Exception:
     print("Drive mount skipped (not in Colab or already mounted).")
 
-os.makedirs(DRIVE_PROCESSED_DIR, exist_ok=True)
-os.makedirs(DRIVE_MODELS_DIR,    exist_ok=True)
+# Only create Drive dirs if Drive is actually mounted
+if DRIVE_AVAILABLE:
+    os.makedirs(DRIVE_PROCESSED_DIR, exist_ok=True)
+    os.makedirs(DRIVE_MODELS_DIR,    exist_ok=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SECTION 4 — BINANCE KLINE DOWNLOADER (sequential, rate-limit safe)
 # ─────────────────────────────────────────────────────────────────────────────
 
-BINANCE_BASE     = "https://fapi.binance.com"
-BARS_PER_REQUEST = 1500    # Binance Futures max per call
-REQUEST_DELAY    = 0.08    # seconds between calls — well under rate limit
+# Binance Spot API works from Google Cloud / Colab.
+# Futures API (fapi.binance.com) is often blocked by GCP IP ranges.
+BINANCE_SPOT_BASE = "https://api.binance.com"
+BARS_PER_REQUEST  = 1000   # Spot API max per call
+REQUEST_DELAY     = 0.10   # seconds between calls
 
 
-def _fetch_page(symbol, start_ms, limit=1500):
-    """Fetch one page of up to 1500 bars. Returns list or [] on failure."""
+def _test_binance_connectivity():
+    """Quick connectivity test — runs before the main download loop."""
+    print("  Testing Binance Spot API connectivity...", flush=True)
+    try:
+        r = requests.get(
+            f"{BINANCE_SPOT_BASE}/api/v3/klines",
+            params={"symbol": "BTCUSDT", "interval": "1m", "limit": 2},
+            timeout=10,
+        )
+        if r.status_code == 200 and isinstance(r.json(), list):
+            print("  Binance Spot API: OK", flush=True)
+            return True
+        else:
+            print(f"  Binance Spot API returned: {r.status_code} — {r.text[:200]}", flush=True)
+            return False
+    except Exception as e:
+        print(f"  Binance Spot API connection failed: {e}", flush=True)
+        return False
+
+
+def _fetch_page(symbol, start_ms, limit=1000):
+    """Fetch one page of up to 1000 bars from Binance Spot. Returns list or []."""
     for attempt in range(5):
         try:
             r = requests.get(
-                f"{BINANCE_BASE}/fapi/v1/klines",
+                f"{BINANCE_SPOT_BASE}/api/v3/klines",
                 params={"symbol": symbol, "interval": "1m",
                         "startTime": start_ms, "limit": limit},
                 timeout=20,
@@ -112,16 +136,18 @@ def _fetch_page(symbol, start_ms, limit=1500):
                 time.sleep(wait)
                 continue
             if r.status_code != 200:
+                print(f"    HTTP {r.status_code}: {r.text[:200]}", flush=True)
                 time.sleep(2 ** attempt)
                 continue
             data = r.json()
-            # Binance error response is a dict: {"code": -1xxx, "msg": "..."}
+            # Binance error: {"code": -1xxx, "msg": "..."}
             if isinstance(data, dict):
                 print(f"    Binance error: {data.get('msg', data)}", flush=True)
                 time.sleep(2 ** attempt)
                 continue
             return data   # list of kline arrays
         except Exception as e:
+            print(f"    attempt {attempt+1} failed: {e}", flush=True)
             time.sleep(2 ** attempt)
     return []
 
@@ -656,7 +682,11 @@ def main():
 
     _check_gpu()
 
-    # Step 1: Download OHLCV (sequential, rate-limit safe)
+    # Step 1: Check connectivity + Download OHLCV
+    if not _test_binance_connectivity():
+        print("\n[ERROR] Cannot reach Binance Spot API from this runtime.")
+        print("  Try: Runtime > Disconnect and delete runtime, then reconnect.")
+        return
     ohlcv_dir   = os.path.join(LOCAL_DATA_DIR, "ohlcv")
     ohlcv_paths = download_all_coins(COINS, MONTHS_HISTORY, ohlcv_dir)
 
@@ -718,8 +748,12 @@ def main():
     full_names  = [f"X{i}" for i in range(X_full.shape[1])]
     micro_names = [f"V{i}" for i in range(N_V6_EXTRA)]
 
-    # Step 5: Train
-    os.makedirs(DRIVE_MODELS_DIR, exist_ok=True)
+    # Step 5: Save models
+    if DRIVE_AVAILABLE:
+        os.makedirs(DRIVE_MODELS_DIR, exist_ok=True)
+    else:
+        # Save locally if Drive not mounted
+        os.makedirs(DRIVE_MODELS_DIR.replace("/content/drive/MyDrive", LOCAL_DATA_DIR), exist_ok=True)
     horizon_results = {}
 
     for h in HORIZONS:
