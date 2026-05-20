@@ -106,5 +106,5 @@ def build_v7_features(close, high, low, volume, ofi, tbv, ts_ms, atr_arr, fundin
         np.clip(liq_exhaustion / 10.0, 0, 1),
         fund_extreme
     ]).astype(np.float32)
-    
+    F_v7_extra = np.nan_to_num(F_v7_extra, nan=0.0, posinf=1.0, neginf=-1.0)
     return np.hstack([F_v6, F_v7_extra])

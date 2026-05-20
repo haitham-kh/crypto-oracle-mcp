@@ -630,10 +630,13 @@ def train_horizon(h, direction, X_tr, ts_tr, y_tr, net_tr, X_va, y_va, net_va,
 
     w_base = recency_weights(ts_tr[m_tr], anchor_ts)
     if model_tag == "full":
-        boost = 1.0 + 2.33 * v7_str_tr[m_tr]
-        sample_w = w_base * boost; sample_w /= sample_w.mean()
+        boost = 1.0 + 2.33 * np.nan_to_num(v7_str_tr[m_tr], nan=0.0)
+        sample_w = w_base * boost
+        sample_w = np.nan_to_num(sample_w, nan=1.0)
+        sample_w = np.maximum(sample_w, 0.01) # Ensure strictly positive
+        sample_w /= np.maximum(sample_w.mean(), 0.01)
     else:
-        sample_w = w_base
+        sample_w = np.maximum(w_base, 0.01)
 
     params = XGB_FULL_PARAMS if model_tag == "full" else XGB_MICRO_PARAMS
     dtr = xgb.DMatrix(X_tr[m_tr], label=y_tr[m_tr], weight=sample_w, feature_names=feat_names)
