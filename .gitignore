@@ -4,31 +4,64 @@
 env/
 venv/
 ENV/
-env.bak/
-venv.bak/
 
 # API keys and secrets
 *secret*
-*key*
+*.key
+config_local.py
 
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
 
-# Data & Models
+# Data & large files (never commit raw data)
 *.csv
 *.parquet
 *.zip
+*.h5
+*.hdf5
 data/
 logs/
+challenge_data/
+scratch/
+
+# Model weights (download from Google Drive after Colab training)
+# Exception: we track meta JSON files (small, text-based)
+data/*.json
+data/*.pkl
+!data/README.md
+
+# Backup files
+*.bak
+*.bak2
+*.bak3
+*.bak4
+*.bak_*
+
+# Live engine state
+active_trades.json
+.oracle_state/
 *.log
 
-# OS generated files
+# Raw API data dumps
+*_raw_data.json
+*_oracle_result.json
+_full_*.json
+_HANDOFF.txt
+
+# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
+ehthumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Charts / outputs (auto-generated)
+charts/
+*.png
+*.jpg

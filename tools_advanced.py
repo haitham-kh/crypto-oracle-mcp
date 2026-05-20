@@ -438,6 +438,22 @@ async def tool_full_coin_intelligence_report(query: str, exchanges: list = None)
         report["chart_image_path"] = None
         failed_tools.append({"tool": "chart_generation", "error": str(e)})
 
+    # Step 2: Price history (Parallel)
+    t_15m = _safe("ohlcv_15m", tool_get_ohlcv_history(symbol, "15m", 200))
+    t_1h = _safe("ohlcv_1h", tool_get_ohlcv_history(symbol, "1h", 200))
+    t_4h = _safe("ohlcv_4h", tool_get_ohlcv_history(symbol, "4h", 200))
+    t_1d = _safe("ohlcv_1d", tool_get_ohlcv_history(symbol, "1d", 200))
+    t_1m = _safe("ohlcv_1m", tool_get_ohlcv_history(symbol, "1m", 1500))  # For V5 Quant Engine
+    
+    r_15m, r_1h, r_4h, r_1d, r_1m = await asyncio.gather(t_15m, t_1h, t_4h, t_1d, t_1m)
+    report["technical_analysis"] = {
+        "15m": r_15m.get("data") if r_15m else None,
+        "1h": r_1h.get("data") if r_1h else None,
+        "4h": r_4h.get("data") if r_4h else None,
+        "1d": r_1d.get("data") if r_1d else None,
+        "1m": r_1m.get("data") if r_1m else None,
+    }
+
     # Step 4: Microstructure + derivatives
     ob_t = _safe("get_order_book_depth", tool_get_order_book_depth(symbol))
     rt_t = _safe("get_recent_trades", tool_get_recent_trades(symbol))
@@ -500,7 +516,7 @@ async def tool_full_coin_intelligence_report(query: str, exchanges: list = None)
         }
 
     # Collection metadata
-    total_sections = 19  # increased from 14 with new tools
+    total_sections = 20  # increased for 1m klines
     successful = total_sections - len(failed_tools)
     report["collection_metadata"] = {
         "coin": sd.get("name", query),

@@ -89,7 +89,7 @@ def build_v5_perp_features(symbol, target_ts_ms, close, perp_dir):
     Returns (n, 12) array. Missing perp data → all-zeros (model treats neutrally).
     """
     n = len(target_ts_ms)
-    F = np.zeros((n, 12), dtype=np.float64)
+    F = np.zeros((n, 12), dtype=np.float32)
 
     funding, metrics = _load_perp(symbol, perp_dir)
 
@@ -205,7 +205,7 @@ def build_v5_cross_sectional(symbol, target_ts_ms, close, basket_state):
     `basket_state` is the parquet from basket_alignment.py (long-form).
     """
     n = len(target_ts_ms)
-    F = np.zeros((n, 6), dtype=np.float64)
+    F = np.zeros((n, 6), dtype=np.float32)
     if basket_state is None:
         return F
     sub = basket_state.filter(pl.col("symbol") == symbol).sort("timestamp")

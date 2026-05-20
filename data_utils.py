@@ -92,56 +92,78 @@ def setup_storage():
     os.makedirs(os.path.join(STORAGE_DIR, "processed_features"), exist_ok=True)
     print(f"Storage directories verified at {STORAGE_DIR}")
 
-# --- POLARS CHUNKING EXAMPLE (Targeting E: Drive) ---
-# When you process Tardis.dev tick data, use Polars lazyframes to stream from E:
-# 
+# --- TICK-TO-MINUTE AGGREGATION ---
+# Uses hash-based group_by on an integer minute-key so Polars never needs to
+# sort the full CSV. Sorting a 9+ GB file requires holding it all in RAM and
+# breaks streaming — this approach stays well under 2 GB regardless of CSV size.
 def process_tick_data_in_chunks(symbol: str, date_str: str):
     setup_storage()
-    
-    # Path to the massive raw CSV on the E: drive
+
     raw_csv_path = os.path.join(STORAGE_DIR, "raw_ticks", f"{symbol}-trades-{date_str}.csv")
     output_parquet = os.path.join(STORAGE_DIR, "processed_features", f"{symbol}_1m_features_{date_str}.parquet")
-    
+
     if not os.path.exists(raw_csv_path):
         print(f"Waiting for data: {raw_csv_path} does not exist yet.")
         return
-        
-    # QUALITY CONTROL (Anti-GIGO): 
-    # Binance Vision CSVs do NOT have headers! If we don't define them, 
-    # the first row of trades is destroyed and data alignment fails.
+
+    # Binance Vision CSVs have no header row.
     binance_columns = ["id", "price", "qty", "quote_qty", "time_ms", "is_buyer_maker", "is_best_match"]
-    
-    # Lazy evaluation prevents loading the whole CSV into RAM
+
     df = pl.scan_csv(raw_csv_path, has_header=False, new_columns=binance_columns)
-    
-    # Clean the data and cast types
-    df_clean = df.with_columns([
-        # Convert Unix milliseconds to actual Datetime objects for grouping
-        pl.from_epoch(pl.col("time_ms"), time_unit="ms").alias("timestamp"),
+
+    # Detect time unit: Binance Vision switched from milliseconds to microseconds
+    # in newer files. Sample the first value to decide: ms timestamps are 13 digits,
+    # us timestamps are 16 digits.
+    sample = pl.scan_csv(raw_csv_path, has_header=False,
+                         new_columns=binance_columns, n_rows=1).collect()
+    raw_ts = int(sample["time_ms"][0])
+    # 16-digit value = microseconds (introduced ~2025); 13-digit = milliseconds
+    if raw_ts > 1_000_000_000_000_000:
+        us_per_minute = 60_000_000
+        time_unit = "us"
+    else:
+        us_per_minute = 60_000
+        time_unit = "ms"
+
+    # Add an integer minute-bucket key by flooring to the nearest minute.
+    # Pure arithmetic — no sort, fully streaming.
+    df_bucketed = df.with_columns([
+        pl.col("id").cast(pl.Int64),
         pl.col("price").cast(pl.Float64),
         pl.col("qty").cast(pl.Float64),
-        pl.col("is_buyer_maker").cast(pl.Boolean)
-    ]).sort("timestamp")
-    
-    # Resample ticks into 1-minute bars using fast Rust aggregations
+        pl.col("is_buyer_maker").cast(pl.Boolean),
+        ((pl.col("time_ms").cast(pl.Int64) // us_per_minute) * us_per_minute).alias("minute_key"),
+    ])
+
+    # Hash-based group_by: fully streaming, zero global-sort overhead.
+    # open/close use sort_by("id") — trade IDs are sequential integers so
+    # min-id = first trade, max-id = last trade in the minute.
     minute_bars = (
-        df_clean.group_by_dynamic("timestamp", every="1m")
+        df_bucketed.group_by("minute_key")
         .agg([
-            pl.col("price").first().alias("open"),
+            pl.col("price").sort_by("id").first().alias("open"),
             pl.col("price").max().alias("high"),
             pl.col("price").min().alias("low"),
-            pl.col("price").last().alias("close"),
+            pl.col("price").sort_by("id").last().alias("close"),
             pl.col("qty").sum().alias("volume"),
-            # Calculate OFI dynamically (is_buyer_maker=True means the TAKER was a SELL.
-            # So is_buyer_maker=False means TAKER BUY).
-            # Taker Buy (aggressor) = positive OFI. Taker Sell = negative OFI.
-            pl.when(pl.col("is_buyer_maker") == False).then(pl.col("qty"))
-              .otherwise(-pl.col("qty")).sum().alias("ofi")
+            pl.when(~pl.col("is_buyer_maker")).then(pl.col("qty"))
+              .otherwise(-pl.col("qty")).sum().alias("ofi"),
         ])
-    ).collect(streaming=True) # Enabled streaming to fix the memory allocation crash
-    
-    # Save the tiny, aggregated feature matrix back to E: as a fast Parquet file
+        .collect(streaming=True)
+    )
+
+    # Sort the tiny result (~44k rows/month) and convert bucket key to datetime.
+    minute_bars = (
+        minute_bars
+        .sort("minute_key")
+        .with_columns(
+            pl.from_epoch(pl.col("minute_key"), time_unit=time_unit)
+              .dt.cast_time_unit("ms")
+              .alias("timestamp")
+        )
+        .drop("minute_key")
+    )
+
     minute_bars.write_parquet(output_parquet)
-    print(f"SUCCESS: Processed {raw_csv_path} -> {output_parquet}")
-    
+    print(f"SUCCESS: {symbol} {date_str} -> {minute_bars.height:,} 1m bars  [{output_parquet}]")
     return minute_bars

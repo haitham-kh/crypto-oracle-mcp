@@ -61,6 +61,10 @@ FEATURE_NAMES_V2 = FEATURE_NAMES + [
     "btc_return_60m",     # BTC 60-minute return (cross-market context)
 ]
 
+# V5 expanded feature set (80 features)
+# Note: we use FEATURE_NAMES_V5 from features_v5 module usually,
+# but we'll define them here for reference if needed.
+
 
 def build_feature_vector(
     ofi: Dict,
@@ -463,6 +467,90 @@ class XGBoostEVModel:
         }
 
 
+class XGBoostEVModelV5:
+    """XGBoost V5 Multi-Horizon EV Model.
+    Supports 60m, 240m, and 720m horizons using the v5 feature stack.
+    """
+
+    def __init__(self, meta_path: str):
+        self.meta_path = meta_path
+        self.models = {}
+        self.feature_names = []
+        self.horizons = []
+        self.calibrated = False
+        self.training_samples = 0
+        self._load()
+
+    def _load(self):
+        try:
+            import xgboost as xgb
+            import pickle
+            if not os.path.exists(self.meta_path):
+                return
+            with open(self.meta_path) as f:
+                meta = json.load(f)
+            self.feature_names = meta.get("feature_names", [])
+            self.horizons = meta.get("horizons", [])
+            self.training_samples = meta.get("total_samples", 0)
+            here = os.path.dirname(self.meta_path)
+
+            for h in self.horizons:
+                res = meta["horizon_results"].get(str(h))
+                if not res:
+                    continue
+                clf = xgb.Booster()
+                clf.load_model(os.path.join(here, "..", res["clf_path"]))
+                reg = xgb.Booster()
+                reg.load_model(os.path.join(here, "..", res["reg_path"]))
+                with open(os.path.join(here, "..", res["calib_path"]), "rb") as f:
+                    calib = pickle.load(f)
+                self.models[h] = {
+                    "clf": clf,
+                    "reg": reg,
+                    "calib": calib,
+                    "p_threshold": float(res.get("p_threshold", 0.5))
+                }
+            self.calibrated = len(self.models) > 0
+        except Exception as e:
+            print(f"Error loading V5 model: {e}")
+            self.calibrated = False
+
+    def predict(self, feature_vector: np.ndarray, horizon: int = 720) -> Dict[str, Any]:
+        """Predict P(up) and EV for a specific horizon."""
+        if horizon not in self.models:
+            return {"error": f"Horizon {horizon} not supported by this model", "p_up": 0.5, "ev_net_pct": 0}
+
+        import xgboost as xgb
+        m = self.models[horizon]
+        dmat = xgb.DMatrix(feature_vector.reshape(1, -1), feature_names=self.feature_names)
+        
+        p_up = float(m["clf"].predict(dmat)[0])
+        ev_pct = float(m["reg"].predict(dmat)[0])
+        
+        # Calibrate p_up if possible
+        if m["calib"]:
+            try:
+                p_up = float(m["calib"].predict_proba(np.array([[p_up]]))[0, 1])
+            except:
+                pass
+
+        p_down = 1.0 - p_up
+        confidence = abs(p_up - 0.5) * 2
+
+        return {
+            "p_up": round(p_up, 4),
+            "p_down": round(p_down, 4),
+            "p_up_pct": round(p_up * 100, 1),
+            "p_down_pct": round(p_down * 100, 1),
+            "ev_net_pct": round(ev_pct, 3),
+            "confidence": round(confidence, 4),
+            "horizon": horizon,
+            "model_calibrated": self.calibrated,
+            "model_type": "xgboost_v5",
+            "signal": "BUY" if p_up >= m["p_threshold"] else "NEUTRAL"
+        }
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # EV COMPUTATION
 # ─────────────────────────────────────────────────────────────────────────────
@@ -570,7 +658,9 @@ _XGB_MODEL_PATH = os.path.join(os.path.dirname(__file__), "data", "ev_model_xgb.
 _XGB_META_PATH = os.path.join(os.path.dirname(__file__), "data", "ev_model_v2_meta.json")
 _XGB_V3_MODEL_PATH = os.path.join(os.path.dirname(__file__), "data", "ev_model_xgb_v3.json")
 _XGB_V3_META_PATH = os.path.join(os.path.dirname(__file__), "data", "ev_model_v3_meta.json")
+_XGB_V5_META_PATH = os.path.join(os.path.dirname(__file__), "data", "ev_model_v5_meta.json")
 _model_instance = None
+_model_v5_instance = None
 
 
 def get_model():
@@ -598,6 +688,15 @@ def get_model():
         # Fall back to logistic
         _model_instance = LogisticEVModel(weights_path=_MODEL_WEIGHTS_PATH)
     return _model_instance
+
+
+def get_v5_model():
+    """Get the multi-horizon V5 model instance."""
+    global _model_v5_instance
+    if _model_v5_instance is None:
+        if os.path.exists(_XGB_V5_META_PATH):
+            _model_v5_instance = XGBoostEVModelV5(meta_path=_XGB_V5_META_PATH)
+    return _model_v5_instance
 
 
 def predict_ev(

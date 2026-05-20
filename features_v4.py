@@ -191,7 +191,7 @@ def build_v4_extras(close, high, low, volume, ofi, taker_buy_volume,
     interactions; if None, BTC features are zeroed.
     """
     n = len(close)
-    F = np.zeros((n, len(FEATURE_NAMES_V4_EXTRA)), dtype=np.float64)
+    F = np.zeros((n, len(FEATURE_NAMES_V4_EXTRA)), dtype=np.float32)
 
     # log returns at 1m for downstream rolling stats
     log_ret = np.zeros(n)
@@ -317,4 +317,4 @@ def build_v4_from_components(F_v2, close, high, low, volume, ofi,
     F_v3 = build_v3_from_v2(F_v2, close, high, low, atr_arr)             # (n, 29)
     F_extras = build_v4_extras(close, high, low, volume, ofi,
                                taker_buy_volume, timestamps_ms, btc_close)  # (n, 33)
-    return np.hstack([F_v3, F_extras])
+    return np.hstack([F_v3, F_extras]).astype(np.float32)

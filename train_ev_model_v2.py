@@ -271,13 +271,15 @@ def load_btc_close():
     """Load all BTC parquets, return dict of {month: close_array}."""
     pattern = os.path.join(PROCESSED_DIR, "BTCUSDT_1m_features_*.parquet")
     files = sorted(glob.glob(pattern))
+    # Exclude 2025 and 2026 for now so they remain completely unseen for later testing
+    files = [f for f in files if "2025-" not in f and "2026-" not in f]
     all_dfs = []
     for f in files:
         try: all_dfs.append(pl.read_parquet(f))
         except: pass
     if not all_dfs: return None, None
     df = pl.concat(all_dfs).sort("timestamp")
-    ts = df["timestamp"].cast(pl.Int64).to_numpy()
+    ts = df["timestamp"].dt.cast_time_unit("ms").cast(pl.Int64).to_numpy()
     close = df["close"].to_numpy().astype(np.float64)
     return ts, close
 

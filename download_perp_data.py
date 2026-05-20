@@ -254,7 +254,7 @@ def process_symbol(sym):
 def main():
     print("=" * 78)
     print("  PERP DATA DOWNLOADER  (data.binance.vision)")
-    print(f"  Coverage: {START_DATE} → {END_DATE}")
+    print(f"  Coverage: {START_DATE} -> {END_DATE}")
     print(f"  Coins:   {len(COINS)}   |   workers: {MAX_WORKERS}")
     print(f"  Output:  {PERP_DIR}")
     print("=" * 78)

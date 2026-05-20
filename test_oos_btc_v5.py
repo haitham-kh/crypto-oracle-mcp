@@ -48,13 +48,8 @@ import polars as pl
 BINANCE_BASE = "https://api.binance.com"
 DATA_DIR = os.path.join(os.path.dirname(__file__), "challenge_data")
 PERP_DIR = os.path.join(os.path.dirname(__file__), "data", "perp")
-# Dynamic coin detection: loads everything in challenge_data
-COINS = sorted([f.split("_")[0] for f in os.listdir(DATA_DIR) if f.endswith("_challenge.json") or f.endswith("_challenge.pkl")])
-BAD_COINS = {"BEAMUSDT", "BONKUSDT", "FLOKIUSDT", "LUNCUSDT", "PEPEUSDT", "SHIBUSDT", "KASUSDT", "WUSDT"}
-COINS = [c for c in COINS if c not in BAD_COINS]
-if not COINS:
-    COINS = ["DOTUSDT", "APTUSDT", "NEARUSDT", "SUIUSDT", "ATOMUSDT", "SOLUSDT", "AVAXUSDT", "LINKUSDT"]
-STARTING_CAPITAL = 100000.0
+COINS = ["BTCUSDT"]
+STARTING_CAPITAL = 10000.0
 
 COIN_ONEHOT_NAMES = [
     "AAVEUSDT", "ADAUSDT", "AVAXUSDT", "BNBUSDT", "BTCUSDT",
@@ -301,7 +296,7 @@ def build_sim_basket_state(coin_data):
     valid = ~np.isnan(rk_r4)            # (n, n_syms) bool
     n_valid = int(valid.sum())
     if n_valid == 0:
-        del R4, rk_r1, rk_r4, rk_v1, coin_alpha, valid
+        del rk_r1, rk_r4, rk_v1, coin_alpha, valid
         return pl.DataFrame(schema={
             "timestamp": pl.Int64, "symbol": pl.Utf8,
             "ret_rank_1h": pl.Float32, "ret_rank_4h": pl.Float32,
@@ -501,18 +496,23 @@ def load_v5_models():
     horizons = meta["horizons"]
     models = {}
     for h in horizons:
-        r = meta["horizon_results"].get(str(h))
-        if r is None:
+        r_group = meta["horizon_results"].get(str(h))
+        if r_group is None:
             continue
-        clf = xgb.Booster(); clf.load_model(os.path.join(here, r["clf_path"]))
-        reg = xgb.Booster(); reg.load_model(os.path.join(here, r["reg_path"]))
-        with open(os.path.join(here, r["calib_path"]), "rb") as f:
-            calib = pickle.load(f)
-        models[h] = {"clf": clf, "reg": reg, "calib": calib,
-                     "p_threshold": float(r["p_threshold"])}
-        print(f"  h={h:>4}m  thr={r['p_threshold']:.2f}  "
-              f"val_EV={r['val_ev_pct']:+.3f}%  test_EV={r['test_ev_pct']:+.3f}%  "
-              f"regIC={r['regressor_rank_ic']:+.3f}")
+        models[h] = {}
+        for direction in ["long", "short"]:
+            r = r_group.get(direction)
+            if r is None:
+                continue
+            clf = xgb.Booster(); clf.load_model(os.path.join(here, r["clf_path"]))
+            reg = xgb.Booster(); reg.load_model(os.path.join(here, r["reg_path"]))
+            with open(os.path.join(here, r["calib_path"]), "rb") as f:
+                calib = pickle.load(f)
+            models[h][direction] = {"clf": clf, "reg": reg, "calib": calib,
+                         "p_threshold": float(r["p_threshold"])}
+            print(f"  h={h:>4}m ({direction}) thr={r['p_threshold']:.2f}  "
+                  f"val_EV={r['val_ev_pct']:+.3f}%  test_EV={r['test_ev_pct']:+.3f}%  "
+                  f"regIC={r['regressor_rank_ic']:+.3f}")
     return meta, models
 
 
@@ -559,8 +559,8 @@ def main():
 
     # TRUE-OOS window: fully after the v5 training set (train ends 2025-04-27).
     # Both trained coins (14) AND untrained coins (31) are date-OOS here.
-    d_start = datetime.datetime.strptime("2025-04-27", "%Y-%m-%d")
-    d_end   = datetime.datetime.strptime("2026-04-30", "%Y-%m-%d")
+    d_start = datetime.datetime.strptime("2025-02-01", "%Y-%m-%d")
+    d_end   = datetime.datetime.strptime("2025-05-01", "%Y-%m-%d")
     overall_start = int(d_start.timestamp() * 1000)
     overall_end   = int(d_end.timestamp() * 1000)
 
@@ -895,62 +895,62 @@ def main():
             # 2-core CPU, running 4 of them concurrently produces oversubscription,
             # cache thrashing and thermal throttling. Serial execution is faster
             # AND deterministic (results identical to threaded version).
-            for h, m in _HORIZON_MODELS:
-                p_raw      = m["clf"].inplace_predict(stacked_feats)
-                p_cal_arr  = m["calib"].predict(p_raw)
-                mu_hat_arr = m["reg"].inplace_predict(stacked_feats)
-                scale = horizon_atr_scale(h)
-                thr_override = 0.52 if h == 720 else 0.60
-                
-                for i, cand in enumerate(valid_cands):
-                    tp_mult = regime_tp_mult(cand["hurst"]) * scale
-                    sl_mult = SL_MULT * scale
-                    tp_pct = tp_mult * cand["atr_val"] / cand["entry"]
-                    sl_pct = sl_mult * cand["atr_val"] / cand["entry"]
-                    sl_pct = min(sl_pct, MAX_SL_PCT)  # Hard cap: never risk > 8% regardless of ATR
+            for h, m_group in _HORIZON_MODELS:
+                for direction in ["long", "short"]:
+                    m = m_group.get(direction)
+                    if m is None: continue
+                    p_raw      = m["clf"].inplace_predict(stacked_feats)
+                    p_cal_arr  = m["calib"].predict(p_raw)
+                    mu_hat_arr = m["reg"].inplace_predict(stacked_feats)
+                    scale = horizon_atr_scale(h)
+                    thr_override = 0.52 if h == 720 else 0.60
                     
-                    if tp_pct < MIN_TP_TO_COST_RATIO * ROUND_TRIP_COST:
-                        filter_stats["tp_too_small"] += 1
-                        continue
+                    for i, cand in enumerate(valid_cands):
+                        tp_mult = regime_tp_mult(cand["hurst"]) * scale
+                        sl_mult = SL_MULT * scale
+                        tp_pct = tp_mult * cand["atr_val"] / cand["entry"]
+                        sl_pct = sl_mult * cand["atr_val"] / cand["entry"]
+                        sl_pct = min(sl_pct, MAX_SL_PCT)
                         
-                    p_cal = float(p_cal_arr[i])
-                    if p_cal < thr_override:
-                        filter_stats["p_below_threshold"] += 1
-                        continue
+                        if tp_pct < MIN_TP_TO_COST_RATIO * ROUND_TRIP_COST:
+                            filter_stats["tp_too_small"] += 1
+                            continue
+                            
+                        p_cal = float(p_cal_arr[i])
+                        if p_cal < thr_override:
+                            filter_stats["p_below_threshold"] += 1
+                            continue
+                            
+                        mu_hat = float(mu_hat_arr[i])
+                        if direction == "short":
+                            mu_hat = -mu_hat
+                            
+                        ev = p_cal * tp_pct - (1 - p_cal) * sl_pct - ROUND_TRIP_COST
+                        if ev < MIN_EV_PCT:
+                            filter_stats["ev_below_threshold"] += 1
+                            continue
+
+                        _h_scale = HORIZON_REGIME_EV_SCALE.get(cand["regime"], {}).get(h, 1.0)
+                        _effective_ev = ev * _h_scale
                         
-                    mu_hat = float(mu_hat_arr[i])
-                    ev = p_cal * tp_pct - (1 - p_cal) * sl_pct - ROUND_TRIP_COST
-                    if ev < MIN_EV_PCT:  # Hard EV floor regardless of regime
-                        filter_stats["ev_below_threshold"] += 1
-                        continue
+                        if direction == "long":
+                            tp_price = cand["entry"] + tp_mult * cand["atr_val"]
+                            sl_price = cand["entry"] * (1.0 - sl_pct)
+                        else:
+                            tp_price = cand["entry"] - tp_mult * cand["atr_val"]
+                            sl_price = cand["entry"] * (1.0 + sl_pct)
 
-                    # Feature 2: Dynamic Horizon EV Weighting
-                    # Scale raw EV by regime-horizon affinity to rank candidates correctly.
-                    # This doesn't change the raw EV (reported as-is) but affects priority.
-                    _h_scale = HORIZON_REGIME_EV_SCALE.get(cand["regime"], {}).get(h, 1.0)
-                    _effective_ev = ev * _h_scale
-
-                    candidates.append({
-                        "sym": cand["sym"], "idx": cand["idx"], "entry": cand["entry"],
-                        "horizon": h, "p_up": p_cal, "mu_hat": mu_hat,
-                        "tp_pct": tp_pct, "sl_pct": sl_pct,
-                        "tp_price": cand["entry"] + tp_mult * cand["atr_val"],
-                        # sl_price derived from capped sl_pct — must be consistent with EV calc
-                        "sl_price": cand["entry"] * (1.0 - sl_pct),
-                        "ev": ev, "effective_ev": _effective_ev,
-                        "hurst": cand["hurst"], "regime": cand["regime"],
-                    })
-                    
-                    # Log first few candidates for debugging
-                    filter_stats["candidates_passed"] += 1
-                    if filter_stats["candidates_passed"] <= 20:
-                        d_ts = datetime.datetime.utcfromtimestamp(check_ts/1000)
-                        print(f"    CANDIDATE #{filter_stats['candidates_passed']} at {d_ts.strftime('%Y-%m-%d %H:%M')}: "
-                              f"{cand['sym']} h={h} regime={cand['regime']} "
-                              f"p={p_cal:.3f} (thr={models[h]['p_threshold']:.3f}) "
-                              f"ev={ev*100:+.3f}% (min={MIN_EV_PCT*100:.3f}%) "
-                              f"tp={tp_pct*100:.3f}% sl={sl_pct*100:.3f}%", flush=True)
-
+                        candidates.append({
+                            "sym": cand["sym"], "idx": cand["idx"], "entry": cand["entry"],
+                            "horizon": h, "direction": direction, "p_up": p_cal, "mu_hat": mu_hat,
+                            "tp_pct": tp_pct, "sl_pct": sl_pct,
+                            "tp_price": tp_price,
+                            "sl_price": sl_price,
+                            "ev": ev, "effective_ev": _effective_ev,
+                            "hurst": cand["hurst"], "regime": cand["regime"],
+                        })
+                        
+                        filter_stats["candidates_passed"] += 1
         # Feature 3: Market Momentum Filter
         # Elevate the EV bar during BTC quiet periods to suppress low-conviction setups.
         _btc_mom = _btc_4h_mom[ci]
@@ -1001,37 +1001,60 @@ def main():
             # Apply Correlation Discount
             position *= correlation_discount
 
+            # --- DYNAMIC FUTURES LEVERAGE ---
+            # Minimum 20x leverage. Scales up to 50x based on model confidence (p_up).
+            confidence_surplus = max(0.0, c["p_up"] - 0.59)
+            leverage = 20.0 + (confidence_surplus / 0.11) * 30.0 # At p_up=0.70+, lev=50x
+            leverage = min(50.0, max(20.0, leverage))
+            
+            # The 'position' variable previously represented spot size. 
+            # Now it represents margin. We cap margin to available capital.
+            margin_required = min(position, capital)
+            
+            # The new trading position is the leveraged notional amount
+            position = margin_required * leverage
+
             if position <= 0:
                 continue
 
             end_idx = min(idx + c["horizon"], len(arr["cl"]) - 1)
             fwd_hi = arr["hi"][idx+1:end_idx+1]
             fwd_lo = arr["lo"][idx+1:end_idx+1]
-            tp_hits = np.where(fwd_hi >= c["tp_price"])[0]
-            sl_hits = np.where(fwd_lo <= c["sl_price"])[0]
+            if c["direction"] == "long":
+                tp_hits = np.where(fwd_hi >= c["tp_price"])[0]
+                sl_hits = np.where(fwd_lo <= c["sl_price"])[0]
+            else:
+                tp_hits = np.where(fwd_lo <= c["tp_price"])[0]
+                sl_hits = np.where(fwd_hi >= c["sl_price"])[0]
             INF = np.iinfo(np.int32).max
             tp_t = tp_hits[0] if len(tp_hits) else INF
             sl_t = sl_hits[0] if len(sl_hits) else INF
             if tp_t < sl_t:
                 if c["horizon"] >= 240:
                     # ── PARTIAL SCALING LOGIC (TP1 + RUNNER) ──
-                    # TP1 hit! We lock in 50% profit at tp_pct.
-                    tp2_price = c["entry"] * (1.0 + c["tp_pct"] * 1.5) # Realistic TP2: 1.5× TP1 distance
-                    be_sl_price = c["entry"] * (1.0 + ROUND_TRIP_COST) # Breakeven SL covers fees
-                    
-                    # Runner data is from TP1 hit until end of horizon
                     runner_hi = fwd_hi[tp_t:]
                     runner_lo = fwd_lo[tp_t:]
                     
-                    hit_tp2 = np.where(runner_hi >= tp2_price)[0]
-                    hit_be = np.where(runner_lo <= be_sl_price)[0]
+                    if c["direction"] == "long":
+                        tp2_price = c["entry"] * (1.0 + c["tp_pct"] * 1.5)
+                        be_sl_price = c["entry"] * (1.0 + ROUND_TRIP_COST)
+                        hit_tp2 = np.where(runner_hi >= tp2_price)[0]
+                        hit_be = np.where(runner_lo <= be_sl_price)[0]
+                    else:
+                        tp2_price = c["entry"] * (1.0 - c["tp_pct"] * 1.5)
+                        be_sl_price = c["entry"] * (1.0 - ROUND_TRIP_COST)
+                        hit_tp2 = np.where(runner_lo <= tp2_price)[0]
+                        hit_be = np.where(runner_hi >= be_sl_price)[0]
                     
                     t2_t = hit_tp2[0] if len(hit_tp2) else INF
                     be_t = hit_be[0] if len(hit_be) else INF
                     
                     if t2_t == INF and be_t == INF:
                         runner_exit = float(arr["cl"][end_idx])
-                        runner_gross = (runner_exit - c["entry"]) / c["entry"]
+                        if c["direction"] == "long":
+                            runner_gross = (runner_exit - c["entry"]) / c["entry"]
+                        else:
+                            runner_gross = (c["entry"] - runner_exit) / c["entry"]
                         reason = "partial_tp1_time_exit"
                         close_offset = len(fwd_hi) - 1
                     elif t2_t < be_t:
@@ -1045,7 +1068,10 @@ def main():
                         
                     # Blended gross return: 50% at TP1, 50% at Runner Exit
                     gross = (0.5 * c["tp_pct"]) + (0.5 * runner_gross)
-                    exit_price = c["entry"] * (1.0 + gross) # Effective blended exit price
+                    if c["direction"] == "long":
+                        exit_price = c["entry"] * (1.0 + gross)
+                    else:
+                        exit_price = c["entry"] * (1.0 - gross)
                 else:
                     exit_price = c["tp_price"]; reason = "take_profit"; gross = c["tp_pct"]
                     close_offset = tp_t
@@ -1057,13 +1083,20 @@ def main():
                 close_offset = sl_t
             else:
                 exit_price = float(arr["cl"][end_idx]); reason = "time_exit"
-                gross = (exit_price - c["entry"]) / c["entry"]
+                if c["direction"] == "long":
+                    gross = (exit_price - c["entry"]) / c["entry"]
+                else:
+                    gross = (c["entry"] - exit_price) / c["entry"]
                 close_offset = min(c["horizon"], len(fwd_hi)-1)
 
             actual_fwd_hi = fwd_hi[:close_offset+1]
             actual_fwd_lo = fwd_lo[:close_offset+1]
-            mfe_pct = float(np.max(actual_fwd_hi) - c["entry"]) / c["entry"] if len(actual_fwd_hi) else 0.0
-            mae_pct = float(np.min(actual_fwd_lo) - c["entry"]) / c["entry"] if len(actual_fwd_lo) else 0.0
+            if c["direction"] == "long":
+                mfe_pct = float(np.max(actual_fwd_hi) - c["entry"]) / c["entry"] if len(actual_fwd_hi) else 0.0
+                mae_pct = float(np.min(actual_fwd_lo) - c["entry"]) / c["entry"] if len(actual_fwd_lo) else 0.0
+            else:
+                mfe_pct = float(c["entry"] - np.min(actual_fwd_lo)) / c["entry"] if len(actual_fwd_lo) else 0.0
+                mae_pct = float(c["entry"] - np.max(actual_fwd_hi)) / c["entry"] if len(actual_fwd_hi) else 0.0
             hold_mins = int(close_offset + 1)
 
             net = gross - ROUND_TRIP_COST
@@ -1080,7 +1113,8 @@ def main():
 
             d_open  = datetime.datetime.utcfromtimestamp(arr["ts"][idx]/1000).strftime('%Y-%m-%d %H:%M')
             d_close = datetime.datetime.utcfromtimestamp(close_ts/1000).strftime('%Y-%m-%d %H:%M')
-            print(f"    [TRADE] {c['sym']:<10} | In: ${position:>9,.2f} | Open: {d_open} -> Close: {d_close} | "
+            dir_str = c["direction"].upper()
+            print(f"    [TRADE] {c['sym']:<10} {dir_str:<5} | Margin: ${margin_required:>7,.2f} ({leverage:.1f}x Lev) -> Size: ${position:>9,.2f} | Open: {d_open} -> Close: {d_close} | "
                   f"Result: {reason:<20} | PnL: ${pnl:>+8,.2f} | Cap: ${capital:>10,.2f} | Hold: {hold_mins}m", flush=True)
 
             # OPT-3: increment weekly counter in O(1)
@@ -1098,7 +1132,7 @@ def main():
 
             all_trades.append({
                 "open_ts": int(arr["ts"][idx]), "close_ts": close_ts,
-                "coin": c["sym"], "horizon": int(c["horizon"]),
+                "sym": c["sym"], "horizon": c["horizon"], "direction": c["direction"],
                 "regime": c["regime"], "p_up": round(c["p_up"], 4),
                 "mu_hat_pct": round(c["mu_hat"]*100, 4),
                 "ev_pct": round(c["ev"]*100, 4),
@@ -1107,7 +1141,9 @@ def main():
                 "gross_pct": round(gross*100, 4),
                 "net_pct":   round(net*100, 4),
                 "pnl_usd":   round(pnl, 2),
-                "size":      round(position, 2),
+                "margin":    round(margin_required, 2),
+                "leverage":  round(leverage, 2),
+                "notional_size": round(position, 2),
                 "tp_pct":    round(c["tp_pct"]*100, 3),
                 "sl_pct":    round(c["sl_pct"]*100, 3),
                 "sigma_pct": round(sigma_pct*100, 3),
@@ -1201,7 +1237,7 @@ def main():
             tp2_hit = sum(1 for t in h_trades if t["reason"] == "partial_tp1_and_tp2")
             be_stop = sum(1 for t in h_trades if t["reason"] == "partial_tp1_stopped_be")
             te_exit = sum(1 for t in h_trades if t["reason"] == "partial_tp1_time_exit")
-            runner_pnl = sum(t["size"] * t["runner_gross_pct"] / 100 for t in h_trades)
+            runner_pnl = sum(t["notional_size"] * t["runner_gross_pct"] / 100 for t in h_trades)
             total_pnl_h = sum(t["pnl_usd"] for t in h_trades)
             runner_pct = runner_pnl / max(abs(total_pnl_h), 0.01) * 100
             print(f"  h={h:<6} {n:>8} {tp1_hit:>7} ({tp1_hit/n*100:>4.0f}%)"
@@ -1212,7 +1248,7 @@ def main():
         # Summary verdict
         all_scaled = [t for t in all_trades if t["horizon"] in SCALED_HORIZONS]
         if all_scaled:
-            total_runner = sum(t["size"] * t["runner_gross_pct"] / 100 for t in all_scaled)
+            total_runner = sum(t["notional_size"] * t["runner_gross_pct"] / 100 for t in all_scaled)
             total_scaled_pnl = sum(t["pnl_usd"] for t in all_scaled)
             verdict = "ADDING VALUE" if total_runner > 0 else "NET DRAG"
             print(f"\n  Runner total: ${total_runner:>+9,.2f}  ({total_runner/max(abs(total_scaled_pnl),0.01)*100:>+.1f}% of scaled PnL)  [{verdict}]")
@@ -1226,7 +1262,7 @@ def main():
 
     print("\n  PER-COIN BREAKDOWN:")
     for sym in COINS:
-        ct = [t for t in all_trades if t["coin"] == sym]
+        ct = [t for t in all_trades if t.get("sym", t.get("coin")) == sym]
         if not ct: continue
         cp = sum(t["pnl_usd"] for t in ct)
         cw = sum(1 for t in ct if t["pnl_usd"] > 0) / max(len(ct),1) * 100

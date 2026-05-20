@@ -1,154 +1,174 @@
+"""
+download_binance_data.py — Parallel downloader for Binance Vision trade data.
+
+Downloads monthly trade ZIPs, extracts them, processes each CSV into a compact
+1-minute-bar Parquet via data_utils.process_tick_data_in_chunks(), then deletes
+the raw CSV and ZIP to reclaim disk space.
+
+Architecture:
+  - 3 concurrent worker threads (download+process in each).
+  - Each worker: download ZIP → extract → aggregate to parquet → delete CSV.
+  - The aggregation is fully streaming (hash-based group_by) so each worker
+    uses <2 GB RAM even for 10 GB CSVs.  3 workers ≈ 6 GB peak, safe on 16 GB.
+  - 1 MB download chunks for maximum throughput.
+  - Resume logic: if the output parquet already exists, the job is skipped.
+"""
 import os
+import sys
+import time
 import requests
 import zipfile
-import io
 import shutil
-import glob
 import gc
-from concurrent.futures import ThreadPoolExecutor
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from data_utils import process_tick_data_in_chunks
 
-# Target the E: drive
-STORAGE_DIR = r"E:\training data for quant"
+# ── Storage paths ──────────────────────────────────────────────────────────────
+STORAGE_DIR   = r"E:\training data for quant"
 RAW_TICKS_DIR = os.path.join(STORAGE_DIR, "raw_ticks")
-RAW_KLINES_DIR = os.path.join(STORAGE_DIR, "raw_klines")
 PROCESSED_DIR = os.path.join(STORAGE_DIR, "processed_features")
 
 os.makedirs(RAW_TICKS_DIR, exist_ok=True)
-os.makedirs(RAW_KLINES_DIR, exist_ok=True)
 os.makedirs(PROCESSED_DIR, exist_ok=True)
 
-# Safety threshold: 20 GB in bytes
-MIN_FREE_SPACE_BYTES = 20 * 1024 * 1024 * 1024  
+# ── Constants ──────────────────────────────────────────────────────────────────
+BASE_URL             = "https://data.binance.vision/data/spot/monthly"
+MIN_FREE_SPACE_BYTES = 20 * 1024 * 1024 * 1024   # 20 GB safety buffer
+DOWNLOAD_CHUNK_SIZE  = 1 * 1024 * 1024            # 1 MB per read (was 8 KB)
+MAX_WORKERS          = 3                           # concurrent download+process
 
-# Binance Vision URLs (100% Free, No API Keys needed)
-BASE_URL = "https://data.binance.vision/data/spot/monthly"
+# ── Thread-safe progress counter ──────────────────────────────────────────────
+_lock    = threading.Lock()
+_done    = 0
+_total   = 0
+_failed  = []
+
+def _progress(symbol, date_str, status):
+    global _done
+    with _lock:
+        _done += 1
+        pct = _done / _total * 100 if _total else 0
+        print(f"[{_done}/{_total}  {pct:5.1f}%]  {symbol} {date_str} — {status}")
+        sys.stdout.flush()
+
 
 def check_storage():
-    """Returns True if there is enough free space, False otherwise."""
-    total, used, free = shutil.disk_usage("E:\\")
-    if free < MIN_FREE_SPACE_BYTES:
-        free_gb = free / (1024**3)
-        print(f"\nCRITICAL: Storage space critically low ({free_gb:.2f} GB free).")
-        print("Halting downloads to protect the 20GB safety buffer on your E: drive.")
-        return False
-    return True
+    """Returns True if E: has enough free space."""
+    _, _, free = shutil.disk_usage("E:\\")
+    return free >= MIN_FREE_SPACE_BYTES
 
-def download_extract_and_process(url: str, symbol: str, date_str: str, is_trades: bool):
-    """Downloads, extracts, processes to Parquet, and DELETES the massive CSV."""
-    if not check_storage():
-        return False
-        
-    # --- RESUME LOGIC ---
-    # Check if the final Parquet file already exists. If it does, skip the download entirely!
-    if is_trades:
-        expected_parquet = os.path.join(PROCESSED_DIR, f"{symbol}_1m_features_{date_str}.parquet")
-        if os.path.exists(expected_parquet):
-            print(f"Skipping {symbol} {date_str} - Parquet already exists!")
-            return True
 
-    filename = url.split("/")[-1]
-    extract_to = RAW_TICKS_DIR if is_trades else RAW_KLINES_DIR
-    
-    print(f"Downloading {filename}...")
-    try:
-        response = requests.get(url, stream=True)
-        if response.status_code == 404:
-            print(f"Not found (data might not exist for this month): {url}")
-            return True 
-            
-        response.raise_for_status()
-        
-        # 1. Extract the ZIP
-        with zipfile.ZipFile(io.BytesIO(response.content)) as z:
-            z.extractall(extract_to)
-            print(f"Extracted to {extract_to}")
-            
-        # 2. Process and Delete (Only for Trades/Ticks)
-        if is_trades:
-            print(f"Processing massive CSV into Parquet...")
-            try:
-                process_tick_data_in_chunks(symbol, date_str)
-                
-                # Delete the massive CSV immediately to save space!
-                csv_path = os.path.join(extract_to, f"{symbol}-trades-{date_str}.csv")
-                if os.path.exists(csv_path):
-                    os.remove(csv_path)
-                    print(f"Deleted massive raw CSV: {csv_path}")
-                
-                # Force Garbage Collection to clear RAM
-                gc.collect()
-            except Exception as e:
-                print(f"Error processing/deleting {filename}: {e}")
-                
+# ── Single job: download → extract → process → cleanup ───────────────────────
+def process_one_month(symbol: str, date_str: str) -> bool:
+    """
+    Complete pipeline for one (symbol, month).
+    Returns True on success or skip, False on failure.
+    """
+    parquet_path = os.path.join(PROCESSED_DIR, f"{symbol}_1m_features_{date_str}.parquet")
+
+    # Resume: already done?
+    if os.path.exists(parquet_path):
+        _progress(symbol, date_str, "SKIP (parquet exists)")
         return True
-            
-    except Exception as e:
-        print(f"Error downloading {filename}: {e}")
+
+    if not check_storage():
+        _progress(symbol, date_str, "ABORT (disk full)")
         return False
 
-def get_historical_data(symbol: str, year: int, months: list[int], download_trades: bool = True, download_klines: bool = True):
-    """
-    Downloads monthly historical data from Binance for a specific coin.
-    """
-    symbol = symbol.upper()
-    
-    for month in months:
-        if not check_storage():
-            break
-            
-        month_str = f"{month:02d}"
-        date_str = f"{year}-{month_str}"
-        
-        # 1. Download Trades (Tick Data for OFI) -> Now processes and deletes CSV!
-        if download_trades:
-            trades_url = f"{BASE_URL}/trades/{symbol}/{symbol}-trades-{date_str}.zip"
-            success = download_extract_and_process(trades_url, symbol, date_str, is_trades=True)
-            if not success and not check_storage(): break
-            
-        # 2. Download Klines (1h Candles for EV Model)
-        if download_klines:
-            klines_url = f"{BASE_URL}/klines/{symbol}/1h/{symbol}-1h-{year}-{month_str}.zip"
-            download_extract_and_process(klines_url, symbol, date_str, is_trades=False)
+    zip_filename = f"{symbol}-trades-{date_str}.zip"
+    csv_filename = f"{symbol}-trades-{date_str}.csv"
+    url          = f"{BASE_URL}/trades/{symbol}/{zip_filename}"
+    zip_path     = os.path.join(RAW_TICKS_DIR, zip_filename)
+    csv_path     = os.path.join(RAW_TICKS_DIR, csv_filename)
 
+    try:
+        # ── 1. Download ZIP (streamed to disk, 1 MB chunks) ──────────────
+        resp = requests.get(url, stream=True, timeout=300)
+        if resp.status_code == 404:
+            _progress(symbol, date_str, "SKIP (404 — not on Binance yet)")
+            return True
+        resp.raise_for_status()
+
+        with open(zip_path, "wb") as f:
+            for chunk in resp.iter_content(chunk_size=DOWNLOAD_CHUNK_SIZE):
+                f.write(chunk)
+
+        # ── 2. Extract ZIP ───────────────────────────────────────────────
+        with zipfile.ZipFile(zip_path, "r") as z:
+            z.extractall(RAW_TICKS_DIR)
+
+        # Delete ZIP immediately — we only need the CSV now
+        os.remove(zip_path)
+
+        # ── 3. Process CSV → Parquet (streaming, <2 GB RAM) ─────────────
+        process_tick_data_in_chunks(symbol, date_str)
+
+        # ── 4. Delete the massive CSV ────────────────────────────────────
+        if os.path.exists(csv_path):
+            os.remove(csv_path)
+
+        gc.collect()
+        _progress(symbol, date_str, "DONE ✓")
+        return True
+
+    except Exception as e:
+        # Clean up partial files on failure
+        for p in (zip_path, csv_path):
+            if os.path.exists(p):
+                try: os.remove(p)
+                except OSError: pass
+        with _lock:
+            _failed.append((symbol, date_str, str(e)))
+        _progress(symbol, date_str, f"FAIL: {e}")
+        return False
+
+
+# ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    print(f"Starting Binance Data Downloader targeting {STORAGE_DIR}")
-    
-    # --- CONFIGURATION ---
-    # Optimal Basket of 20 Coins: Covers Majors, L1s, DeFi, AI, and Memes (including OG)
-    TARGET_COINS = [
-        "BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT",           # The Majors
-        "DOGEUSDT", "PEPEUSDT", "SHIBUSDT", "WIFUSDT",        # Memecoin Sector
-        "LINKUSDT", "UNIUSDT", "AAVEUSDT",                    # DeFi & Oracles
-        "ADAUSDT", "AVAXUSDT", "XRPUSDT", "TONUSDT",          # Layer 1 Alternatives
-        "FETUSDT", "RNDRUSDT",                                # AI / Compute
-        "OGUSDT", "GALAUSDT",                                 # Gaming / Fan / Culture
-        "XMRUSDT"                                             # Privacy
-    ]
-    
-    # Define the schedule: 2023, 2024, 2025, and Jan-Apr of 2026 
-    # This gives the model a massive 40-month dataset spanning bear, chop, and bull regimes!
-    DOWNLOAD_SCHEDULE = {
-        2023: list(range(1, 13)),  # Months 1 through 12
-        2024: list(range(1, 13)),  # Months 1 through 12
-        2025: list(range(1, 13)),  # Months 1 through 12
-        2026: list(range(1, 5))    # Months 1 through 4 (Jan to Apr)
+    print(f"Binance Data Downloader — targeting {STORAGE_DIR}")
+    print(f"Workers: {MAX_WORKERS}  |  Chunk size: {DOWNLOAD_CHUNK_SIZE // 1024} KB\n")
+
+    TARGET_COINS = ["BTCUSDT", "ETHUSDT"]
+
+    SCHEDULE = {
+        2023: list(range(1, 13)),
+        2024: list(range(1, 13)),
+        2025: list(range(1, 13)),
+        2026: list(range(1, 5)),
     }
-    
+
+    # Build flat job list: [(symbol, "YYYY-MM"), ...]
+    jobs = []
     for coin in TARGET_COINS:
-        if not check_storage():
-            break
-        print(f"\n{'='*50}\nSTARTING DOWNLOADS FOR {coin}\n{'='*50}")
-        for year, months in DOWNLOAD_SCHEDULE.items():
-            if not check_storage():
-                break
-            print(f"\nQueueing downloads for {coin} ({year}) - Months: {months}")
-            get_historical_data(
-                symbol=coin,
-                year=year,
-                months=months,
-                download_trades=True,
-                download_klines=True
-            )
-            
-    print("\nScript execution finished. Check your E: drive!")
+        for year, months in SCHEDULE.items():
+            for m in months:
+                jobs.append((coin, f"{year}-{m:02d}"))
+
+    _total = len(jobs)
+    print(f"Total jobs: {_total}  (already-done parquets will be skipped instantly)\n")
+
+    t0 = time.time()
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+        futures = {pool.submit(process_one_month, sym, ds): (sym, ds)
+                   for sym, ds in jobs}
+
+        for fut in as_completed(futures):
+            # Exceptions inside the worker are caught there; this is just
+            # a safety net so one crash doesn't kill the pool.
+            try:
+                fut.result()
+            except Exception as exc:
+                sym, ds = futures[fut]
+                print(f"  ** Unhandled error for {sym} {ds}: {exc}")
+
+    elapsed = time.time() - t0
+    print(f"\n{'='*60}")
+    print(f"Finished in {elapsed/60:.1f} minutes.")
+    print(f"Succeeded: {_done - len(_failed)}  |  Failed: {len(_failed)}")
+    if _failed:
+        print("\nFailed jobs:")
+        for sym, ds, err in _failed:
+            print(f"  {sym} {ds}: {err}")
+    print(f"{'='*60}")

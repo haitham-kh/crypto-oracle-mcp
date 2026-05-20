@@ -1314,13 +1314,16 @@ def _run_quant_engine(report: Dict, ta_all: Dict, current_price: Optional[float]
         from regime_classifier import classify_regime
         from volatility_engine import analyze_volatility_sustainability
         from failure_detector import detect_all_failure_modes
-        from ev_model import predict_ev, build_feature_vector
+        from ev_model import predict_ev, build_feature_vector, get_v5_model
+        from features_v5 import build_v5_full, COIN_ONEHOT_NAMES
+        from train_ev_model_v2 import build_features_v2
 
         # --- Extract raw data from report ---
         candles_15m = _extract_candles(ta_all, "15m", report)
         candles_1h = _extract_candles(ta_all, "1h", report)
         candles_4h = _extract_candles(ta_all, "4h", report)
         candles_1d = _extract_candles(ta_all, "1d", report)
+        candles_1m = _extract_candles(ta_all, "1m", report)
 
         trades = _g(report, "trade_flow") or {}
         raw_trades = trades.get("trades_sample") or []
@@ -1395,6 +1398,68 @@ def _run_quant_engine(report: Dict, ta_all: Dict, current_price: Optional[float]
             target_down_pct=max(0.3, target_down),
         )
 
+        # --- V5 Quant Engine (if 1m data available) ---
+        v5_quant = {"available": False}
+        v5_model = get_v5_model()
+        if candles_1m and v5_model and v5_model.calibrated:
+            try:
+                # Prepare features for the latest candle
+                ts = np.array([c["timestamp"] for c in candles_1m], dtype=np.float64)
+                hi = np.array([c["high"] for c in candles_1m], dtype=np.float64)
+                lo = np.array([c["low"] for c in candles_1m], dtype=np.float64)
+                cl = np.array([c["close"] for c in candles_1m], dtype=np.float64)
+                vo = np.array([c["volume"] for c in candles_1m], dtype=np.float64)
+                tbv = np.array([c.get("taker_buy_volume", vo[i]*0.5) for i, c in enumerate(candles_1m)], dtype=np.float64)
+                ofi_v5 = 2 * tbv - vo
+                
+                # We need BTC alignment for F_v2
+                # In live, we might not have 1m BTC in the report unless we fetch it.
+                # For now, if missing, we use a constant or a dummy.
+                btc_aligned = np.full_like(cl, 60000.0) # Dummy
+                # TODO: improve BTC alignment in oracle_engine.py
+                
+                F_v2, atr = build_features_v2(cl, hi, lo, vo, ofi_v5, ts, btc_aligned)
+                
+                # Perp dir and basket state
+                perp_dir = os.path.join(os.path.dirname(__file__), "data", "perp")
+                # Dummy basket state for now
+                import polars as pl
+                empty_basket = pl.DataFrame({
+                    "timestamp": ts.astype(np.int64),
+                    "symbol": [sym] * len(ts),
+                    "ret_rank_1h": [0.5] * len(ts), "ret_rank_4h": [0.5] * len(ts),
+                    "rv_rank_1h": [0.5] * len(ts), "coin_alpha_4h": [0.0] * len(ts),
+                    "basket_mom_4h": [0.0] * len(ts),
+                })
+                
+                F_feats = build_v5_full(sym, F_v2, cl, hi, lo, vo, ofi_v5, tbv, ts, atr, btc_aligned, perp_dir, empty_basket)
+                
+                # Coin one-hot
+                def _onehot(symbol, n):
+                    block = np.zeros((n, len(COIN_ONEHOT_NAMES)), dtype=np.float64)
+                    if symbol in COIN_ONEHOT_NAMES:
+                        block[:, COIN_ONEHOT_NAMES.index(symbol)] = 1.0
+                    return block
+                
+                F_full = np.hstack([F_feats, _onehot(sym, len(cl))])
+                
+                # Predict for each horizon
+                v5_results = {}
+                valid = ~np.any(np.isnan(F_full), axis=1)
+                if np.any(valid):
+                    last_idx = np.where(valid)[0][-1]
+                    feat_row = F_full[last_idx]
+                    for h in v5_model.horizons:
+                        v5_results[str(h)] = v5_model.predict(feat_row, h)
+                
+                v5_quant = {
+                    "available": True,
+                    "horizons": v5_results,
+                    "best_horizon": max(v5_results.keys(), key=lambda k: v5_results[k].get("ev_net_pct", 0)) if v5_results else None
+                }
+            except Exception as e:
+                v5_quant = {"available": False, "error": str(e)}
+
         # Apply failure mode confidence multiplier to EV signal
         conf_mult = failure_modes.get("confidence_multiplier", 1.0)
         if ev_pred:
@@ -1444,6 +1509,7 @@ def _run_quant_engine(report: Dict, ta_all: Dict, current_price: Optional[float]
                 "summary": failure_modes.get("summary"),
             },
             "ev_model": ev_pred,
+            "v5_quant": v5_quant,
             "quant_signal": {
                 "signal": ev_pred.get("signal", "NEUTRAL"),
                 "p_up_pct": ev_pred.get("p_up_pct"),
@@ -1929,6 +1995,24 @@ def render_markdown(result: Dict, report: Dict) -> str:
         sl_str = f"${_fmt_price(sl_cons)}"
     md.append(f"**ATR (4H):** ${_fmt_price(atr_4h)} "
               f"({atr_pct_str} of price) → SL for conservative: {sl_str}")
+    
+    # ----- V5 QUANT ENGINE -----
+    v5 = q_res.get("v5_quant") or {}
+    if v5.get("available"):
+        md.append("\n---\n")
+        md.append("## THE QUANT'S READ — V5 High-Resolution Engine")
+        md.append("> *Multi-horizon microstructure & cross-sectional signals.*\n")
+        md.append("| Horizon | P(Up) | Expected Value | Signal |")
+        md.append("|---|---|---|---|")
+        horizons = v5.get("horizons") or {}
+        for h_str in sorted(horizons.keys(), key=lambda x: int(x)):
+            h = horizons[h_str]
+            p_up = h.get("p_up_pct", 50.0)
+            ev_net = h.get("ev_net_pct", 0.0)
+            sig_v5 = h.get("signal", "NEUTRAL")
+            h_label = f"{int(h_str)/60:.1f}h" if int(h_str) >= 60 else f"{h_str}m"
+            md.append(f"| {h_label} | {p_up:.1f}% | {ev_net:+.3f}% | {sig_v5} |")
+    
     md.append("\n---\n")
 
     md.append("## COMPOSITE SIGNAL SCORECARD\n")

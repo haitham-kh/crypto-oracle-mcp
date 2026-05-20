@@ -44,11 +44,16 @@ def label_multi_horizon(close, high, low, atr_arr, hurst_arr, sample_idx,
     for h in horizons:
         out[f"y_{h}"]     = np.full(k, np.nan, dtype=np.float64)
         out[f"net_{h}"]   = np.full(k, np.nan, dtype=np.float64)
+        out[f"reason_{h}"] = np.full(k, -1, dtype=np.int8)
+
+        out[f"y_short_{h}"]     = np.full(k, np.nan, dtype=np.float64)
+        out[f"net_short_{h}"]   = np.full(k, np.nan, dtype=np.float64)
+        out[f"reason_short_{h}"] = np.full(k, -1, dtype=np.int8)
+
         out[f"ret_{h}"]   = np.full(k, np.nan, dtype=np.float64)
         out[f"sigma_{h}"] = np.full(k, np.nan, dtype=np.float64)
         out[f"tp_{h}"]    = np.full(k, np.nan, dtype=np.float64)
         out[f"sl_{h}"]    = np.full(k, np.nan, dtype=np.float64)
-        out[f"reason_{h}"] = np.full(k, -1, dtype=np.int8)
     out["any_valid"] = np.zeros(k, dtype=bool)
 
     log_close = np.log(np.maximum(close, 1e-12))
@@ -86,30 +91,55 @@ def label_multi_horizon(close, high, low, atr_arr, hurst_arr, sample_idx,
                 continue
             any_valid = True
 
-            tp_price = entry + tp_mult * atr
-            sl_price = entry - sl_mult * atr
             fwd_hi = high[i + 1:end + 1]
             fwd_lo = low[i + 1:end + 1]
-            tp_hits = np.where(fwd_hi >= tp_price)[0]
-            sl_hits = np.where(fwd_lo <= sl_price)[0]
-            tp_t = tp_hits[0] if len(tp_hits) else INF
-            sl_t = sl_hits[0] if len(sl_hits) else INF
 
-            if tp_t < sl_t:
-                gross = tp_p; reason = 0
-            elif sl_t < tp_t:
-                gross = -sl_p; reason = 1
-            elif tp_t == sl_t and tp_t != INF:
-                gross = -sl_p; reason = 1   # ambiguous → assume SL (worst case)
+            # --- LONG EVALUATION ---
+            tp_price_l = entry + tp_mult * atr
+            sl_price_l = entry - sl_mult * atr
+            tp_hits_l = np.where(fwd_hi >= tp_price_l)[0]
+            sl_hits_l = np.where(fwd_lo <= sl_price_l)[0]
+            tp_t_l = tp_hits_l[0] if len(tp_hits_l) else INF
+            sl_t_l = sl_hits_l[0] if len(sl_hits_l) else INF
+
+            if tp_t_l < sl_t_l:
+                gross_l = tp_p; reason_l = 0
+            elif sl_t_l < tp_t_l:
+                gross_l = -sl_p; reason_l = 1
+            elif tp_t_l == sl_t_l and tp_t_l != INF:
+                gross_l = -sl_p; reason_l = 1
             else:
-                gross = (close[end] - entry) / entry; reason = 2
+                gross_l = (close[end] - entry) / entry; reason_l = 2
+            net_l = gross_l - cost
 
-            net = gross - cost
-            out[f"y_{h}"][kk]     = 1.0 if net > 0 else 0.0
-            out[f"net_{h}"][kk]   = net
+            out[f"y_{h}"][kk]     = 1.0 if net_l > 0 else 0.0
+            out[f"net_{h}"][kk]   = net_l
+            out[f"reason_{h}"][kk] = reason_l
+
+            # --- SHORT EVALUATION ---
+            tp_price_s = entry - tp_mult * atr
+            sl_price_s = entry + sl_mult * atr
+            tp_hits_s = np.where(fwd_lo <= tp_price_s)[0]
+            sl_hits_s = np.where(fwd_hi >= sl_price_s)[0]
+            tp_t_s = tp_hits_s[0] if len(tp_hits_s) else INF
+            sl_t_s = sl_hits_s[0] if len(sl_hits_s) else INF
+
+            if tp_t_s < sl_t_s:
+                gross_s = tp_p; reason_s = 0
+            elif sl_t_s < tp_t_s:
+                gross_s = -sl_p; reason_s = 1
+            elif tp_t_s == sl_t_s and tp_t_s != INF:
+                gross_s = -sl_p; reason_s = 1
+            else:
+                gross_s = (entry - close[end]) / entry; reason_s = 2
+            net_s = gross_s - cost
+
+            out[f"y_short_{h}"][kk]     = 1.0 if net_s > 0 else 0.0
+            out[f"net_short_{h}"][kk]   = net_s
+            out[f"reason_short_{h}"][kk] = reason_s
+
             out[f"tp_{h}"][kk]    = tp_p
             out[f"sl_{h}"][kk]    = sl_p
-            out[f"reason_{h}"][kk] = reason
 
         out["any_valid"][kk] = any_valid
 
