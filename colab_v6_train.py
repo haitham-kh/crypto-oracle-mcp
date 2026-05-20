@@ -63,15 +63,13 @@ print("Done.\n")
 # SECTION 2 — IMPORTS
 # ─────────────────────────────────────────────────────────────────────────────
 
-import os, time, datetime, json, math, gc, glob, pickle, threading
+import os, time, datetime, json, math, gc, glob, pickle
 import requests
 import numpy as np
 import polars as pl
 import xgboost as xgb
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 os.makedirs(LOCAL_DATA_DIR, exist_ok=True)
-os.makedirs(DRIVE_MODELS_DIR, exist_ok=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SECTION 3 — GOOGLE DRIVE MOUNT
@@ -90,115 +88,135 @@ os.makedirs(DRIVE_PROCESSED_DIR, exist_ok=True)
 os.makedirs(DRIVE_MODELS_DIR,    exist_ok=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SECTION 4 — BINANCE KLINE DOWNLOADER (parallel, fast)
+# SECTION 4 — BINANCE KLINE DOWNLOADER (sequential, rate-limit safe)
 # ─────────────────────────────────────────────────────────────────────────────
 
-BINANCE_BASE = "https://fapi.binance.com"
+BINANCE_BASE     = "https://fapi.binance.com"
+BARS_PER_REQUEST = 1500    # Binance Futures max per call
+REQUEST_DELAY    = 0.08    # seconds between calls — well under rate limit
 
-def _download_chunk(symbol, start_ms, end_ms, limit=1000):
-    for attempt in range(6):
+
+def _fetch_page(symbol, start_ms, limit=1500):
+    """Fetch one page of up to 1500 bars. Returns list or [] on failure."""
+    for attempt in range(5):
         try:
-            r = requests.get(f"{BINANCE_BASE}/fapi/v1/klines",
-                             params={"symbol": symbol, "interval": "1m",
-                                     "startTime": start_ms, "endTime": end_ms,
-                                     "limit": limit},
-                             timeout=30)
+            r = requests.get(
+                f"{BINANCE_BASE}/fapi/v1/klines",
+                params={"symbol": symbol, "interval": "1m",
+                        "startTime": start_ms, "limit": limit},
+                timeout=20,
+            )
             if r.status_code == 429:
-                time.sleep(30); continue
-            r.raise_for_status()
-            return r.json()
-        except Exception:
+                wait = int(r.headers.get("Retry-After", 60))
+                print(f"    rate-limit 429 — sleeping {wait}s", flush=True)
+                time.sleep(wait)
+                continue
+            if r.status_code != 200:
+                time.sleep(2 ** attempt)
+                continue
+            data = r.json()
+            # Binance error response is a dict: {"code": -1xxx, "msg": "..."}
+            if isinstance(data, dict):
+                print(f"    Binance error: {data.get('msg', data)}", flush=True)
+                time.sleep(2 ** attempt)
+                continue
+            return data   # list of kline arrays
+        except Exception as e:
             time.sleep(2 ** attempt)
     return []
 
-def download_klines(symbol, start_ms, end_ms, n_workers=8):
-    """Parallel download: splits time range into chunks and fetches concurrently."""
-    # Split into ~500-bar chunks for parallel fetch
-    chunk_ms = 1000 * 60_000  # 1000 minutes per chunk
-    ranges = []
+
+def download_klines(symbol, start_ms, end_ms):
+    """Download full history by walking forward page-by-page. No threading."""
+    all_rows = []
     cur = start_ms
+    total_expected = (end_ms - start_ms) // 60_000
+    last_print_n = 0
+
     while cur < end_ms:
-        nxt = min(cur + chunk_ms, end_ms)
-        ranges.append((cur, nxt))
-        cur = nxt
+        page = _fetch_page(symbol, cur, BARS_PER_REQUEST)
+        if not page:
+            # One longer retry
+            time.sleep(10)
+            page = _fetch_page(symbol, cur, BARS_PER_REQUEST)
+            if not page:
+                print(f"    [{symbol}] gave up at {len(all_rows):,} bars — stopping early", flush=True)
+                break
 
-    all_rows = {}  # ts -> row, dedup by timestamp
-    lock = threading.Lock()
+        all_rows.extend(page)
+        cur = int(page[-1][0]) + 60_000   # advance past last bar's open time
 
-    def fetch(rng):
-        data = _download_chunk(symbol, rng[0], rng[1])
-        with lock:
-            for row in data:
-                ts = int(row[0])
-                if ts not in all_rows:
-                    all_rows[ts] = row
+        fetched = len(all_rows)
+        if fetched - last_print_n >= 50_000:
+            pct = fetched / max(total_expected, 1) * 100
+            print(f"    {symbol}: {fetched:,}/{total_expected:,} bars  ({pct:.0f}%)", flush=True)
+            last_print_n = fetched
 
-    with ThreadPoolExecutor(max_workers=n_workers) as ex:
-        futs = [ex.submit(fetch, r) for r in ranges]
-        for i, f in enumerate(as_completed(futs)):
-            f.result()
-            if (i + 1) % 50 == 0:
-                print(f"    {symbol}: {i+1}/{len(ranges)} chunks done", flush=True)
+        time.sleep(REQUEST_DELAY)
 
-    sorted_rows = sorted(all_rows.values(), key=lambda r: int(r[0]))
-    candles = [{
-        "timestamp_ms":      int(r[0]),
-        "open":              float(r[1]),
-        "high":              float(r[2]),
-        "low":               float(r[3]),
-        "close":             float(r[4]),
-        "volume":            float(r[5]),
-        "taker_buy_volume":  float(r[9]),
-    } for r in sorted_rows]
-    return candles
+    # Trim anything past end_ms
+    return [{
+        "timestamp_ms":     int(r[0]),
+        "open":             float(r[1]),
+        "high":             float(r[2]),
+        "low":              float(r[3]),
+        "close":            float(r[4]),
+        "volume":           float(r[5]),
+        "taker_buy_volume": float(r[9]),
+    } for r in all_rows if int(r[0]) < end_ms]
 
 
-def download_all_coins(coins, months, out_dir, n_coin_workers=4):
-    """Download all coins in parallel (4 coins at a time)."""
-    end_dt   = datetime.datetime.utcnow().replace(minute=0, second=0, microsecond=0)
-    start_dt = end_dt - datetime.timedelta(days=months * 30)
-    start_ms = int(start_dt.timestamp() * 1000)
-    end_ms   = int(end_dt.timestamp() * 1000)
+def download_all_coins(coins, months, out_dir):
+    """Download all coins sequentially — reliable and rate-limit safe."""
+    end_dt        = datetime.datetime.utcnow().replace(second=0, microsecond=0)
+    start_dt      = end_dt - datetime.timedelta(days=months * 30)
+    start_ms      = int(start_dt.timestamp() * 1000)
+    end_ms        = int(end_dt.timestamp() * 1000)
     expected_bars = (end_ms - start_ms) // 60_000
+    pages_per_coin = math.ceil(expected_bars / BARS_PER_REQUEST)
+    est_min_each   = pages_per_coin * REQUEST_DELAY / 60
 
     print(f"\n{'='*65}")
     print(f"  DOWNLOADING {len(coins)} coins  |  {months}m  |  ~{expected_bars:,} bars/coin")
-    print(f"  Period: {start_dt.date()} → {end_dt.date()}")
+    print(f"  Period : {start_dt.date()} -> {end_dt.date()}")
+    print(f"  Est.   : ~{est_min_each:.0f} min/coin  x  {len(coins)} coins  =  ~{est_min_each*len(coins):.0f} min total")
     print(f"{'='*65}\n")
 
     os.makedirs(out_dir, exist_ok=True)
     ohlcv_paths = {}
 
-    def process_coin(sym):
+    for sym in coins:
         out_path = os.path.join(out_dir, f"{sym}_1m_ohlcv.parquet")
+
+        # Skip already-complete downloads
         if os.path.exists(out_path):
-            sz = os.path.getsize(out_path) / 1e6
-            df_check = pl.read_parquet(out_path)
-            if len(df_check) > expected_bars * 0.90:
-                print(f"  {sym}: SKIP (already {len(df_check):,} bars, {sz:.0f}MB)")
-                return sym, out_path
-            print(f"  {sym}: incomplete ({len(df_check):,}/{expected_bars:,} bars), re-downloading")
+            try:
+                df_check = pl.read_parquet(out_path)
+                if len(df_check) >= expected_bars * 0.90:
+                    sz = os.path.getsize(out_path) / 1e6
+                    print(f"  {sym}: SKIP — cached ({len(df_check):,} bars, {sz:.0f}MB)")
+                    ohlcv_paths[sym] = out_path
+                    continue
+                else:
+                    print(f"  {sym}: incomplete ({len(df_check):,}/{expected_bars:,}) — re-downloading")
+            except Exception:
+                pass
 
         t0 = time.time()
         print(f"  {sym}: downloading...", flush=True)
-        candles = download_klines(sym, start_ms, end_ms, n_workers=6)
+        candles = download_klines(sym, start_ms, end_ms)
+
         if not candles:
-            print(f"  {sym}: ERROR — no data")
-            return sym, None
+            print(f"  {sym}: FAILED — skipping this coin")
+            continue
 
         df = pl.DataFrame(candles).sort("timestamp_ms")
         df = df.with_columns((2.0 * pl.col("taker_buy_volume") - pl.col("volume")).alias("ofi"))
         df.write_parquet(out_path)
+        elapsed = (time.time() - t0) / 60
         sz = os.path.getsize(out_path) / 1e6
-        elapsed = time.time() - t0
-        print(f"  {sym}: {len(candles):,} bars → {sz:.0f}MB  ({elapsed:.0f}s)", flush=True)
-        return sym, out_path
-
-    # Sequential to avoid Binance rate limits — Colab is fast enough
-    for sym in coins:
-        sym, path = process_coin(sym)
-        if path:
-            ohlcv_paths[sym] = path
+        print(f"  {sym}: done  {len(candles):,} bars  {sz:.0f}MB  ({elapsed:.1f} min)", flush=True)
+        ohlcv_paths[sym] = out_path
 
     print(f"\nDownload complete: {len(ohlcv_paths)}/{len(coins)} coins ready.")
     return ohlcv_paths
@@ -301,7 +319,6 @@ def _vpvr(volume, close, window=1440, stride=30, n_bins=48, va_pct=0.70):
     return poc_d, vah_d, val_d, aw
 
 def _atr14(high, low, close):
-    """ATR-14 using true range."""
     n = len(close)
     tr = np.maximum(high - low, np.maximum(
         np.abs(high - np.roll(close, 1)),
@@ -421,7 +438,7 @@ def v6_signal_strength(F):
     return np.clip(0.25*don_bk+0.20*don_pos+0.15*avwap_s+0.10*avwap_w+0.15*sweep+0.15*sma_a,0,1).astype(np.float32)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SECTION 6 — DATA LOADING  (parquet → X_v5 + labels)
+# SECTION 6 — DATA LOADING  (parquet -> X_v5 + labels)
 # ─────────────────────────────────────────────────────────────────────────────
 
 N_V5_FULL = 94  # 80 V5 features + 14 coin one-hot
@@ -438,7 +455,6 @@ def load_training_bundle(symbol, processed_dir, ohlcv_dir):
         print(f"  [{symbol}] SKIP — no _1m_ohlcv.parquet  (download failed?)")
         return None
 
-    # Load training parquet (sampled rows)
     df = pl.read_parquet(tp)
     x_cols = sorted([c for c in df.columns if c.startswith("X_")],
                     key=lambda c: int(c.split("_")[1]))
@@ -458,7 +474,6 @@ def load_training_bundle(symbol, processed_dir, ohlcv_dir):
                              else np.full(n, np.nan, np.float32))
     any_v = df["any_valid"].to_numpy().astype(bool) if "any_valid" in df.columns else np.ones(n, bool)
 
-    # Load OHLCV and compute V6 features on full 1m series
     print(f"  [{symbol}] {n:,} samples  |  Computing V6 features...", flush=True)
     odf = pl.read_parquet(op).sort("timestamp_ms")
     cl_f  = odf["close"].to_numpy().astype(np.float64)
@@ -473,7 +488,6 @@ def load_training_bundle(symbol, processed_dir, ohlcv_dir):
 
     F_v6_full = build_v6_features(cl_f, hi_f, lo_f, vo_f, ofi_f, tbv_f, ts_f, atr_f)
 
-    # Align by timestamp (±5 min tolerance)
     pos = np.searchsorted(ts_f, ts, side="left")
     pos = np.clip(pos, 0, len(ts_f) - 1)
     ok  = np.abs(ts_f[pos] - ts) <= 5 * 60_000
@@ -481,7 +495,7 @@ def load_training_bundle(symbol, processed_dir, ohlcv_dir):
     F_v6_samp[ok] = F_v6_full[pos[ok]]
     print(f"  [{symbol}] V6 match: {ok.sum()}/{n} ({ok.mean()*100:.1f}%)")
 
-    X_v6  = np.hstack([X_v5, F_v6_samp]).astype(np.float32)   # (n, 130)
+    X_v6   = np.hstack([X_v5, F_v6_samp]).astype(np.float32)
     str_v6 = v6_signal_strength(F_v6_samp)
 
     return {
@@ -554,7 +568,7 @@ def train_horizon(h, direction, X_tr, ts_tr, y_tr, net_tr, X_va, y_va, net_va,
                   X_te, y_te, net_te, ret_tr, ret_va, ret_te, v6_str_tr,
                   feat_names, anchor_ts, model_tag, models_dir):
     from sklearn.isotonic import IsotonicRegression
-    print(f"\n  ── V6_{model_tag} | h={h}m | {direction.upper()} ────────────────────────", flush=True)
+    print(f"\n  -- V6_{model_tag} | h={h}m | {direction.upper()} ---", flush=True)
 
     m_tr = ~np.isnan(y_tr); m_va = ~np.isnan(y_va); m_te = ~np.isnan(y_te)
     n_tr, n_va, n_te = m_tr.sum(), m_va.sum(), m_te.sum()
@@ -597,13 +611,11 @@ def train_horizon(h, direction, X_tr, ts_tr, y_tr, net_tr, X_va, y_va, net_va,
         ev_t = wr_t = pf_t = 0.0
         print("    OOS test: no trades passed threshold")
 
-    # Save
     clf_path   = os.path.join(models_dir, f"v6_{model_tag}_clf_{direction}_h{h}.json")
     calib_path = os.path.join(models_dir, f"v6_{model_tag}_calib_{direction}_h{h}.pkl")
     clf.save_model(clf_path)
     with open(calib_path, "wb") as fp: pickle.dump(calib, fp)
 
-    # Regressor (long + full only)
     rank_ic = 0.0
     if direction == "long" and model_tag == "full":
         rm_tr = ~np.isnan(ret_tr); rm_va = ~np.isnan(ret_va)
@@ -642,33 +654,31 @@ def main():
     print(f"  {len(COINS)} coins  |  horizons={HORIZONS}  |  ROUND_TRIP={ROUND_TRIP_COST*100:.2f}%")
     print("="*70)
 
-    # ── Check GPU ──────────────────────────────────────────────────────────
     _check_gpu()
 
-    # ── Step 1: Download OHLCV ─────────────────────────────────────────────
-    ohlcv_dir = os.path.join(LOCAL_DATA_DIR, "ohlcv")
+    # Step 1: Download OHLCV (sequential, rate-limit safe)
+    ohlcv_dir   = os.path.join(LOCAL_DATA_DIR, "ohlcv")
     ohlcv_paths = download_all_coins(COINS, MONTHS_HISTORY, ohlcv_dir)
 
-    # ── Step 2: Find training parquets ────────────────────────────────────
-    # Priority: repo training_data/ → Google Drive → local fallback
+    # Step 2: Find training parquets (repo > Drive > local)
     processed_dir = None
-    for candidate in [REPO_TRAINING_DIR, DRIVE_PROCESSED_DIR, os.path.join(LOCAL_DATA_DIR, "processed")]:
+    for candidate in [REPO_TRAINING_DIR, DRIVE_PROCESSED_DIR,
+                      os.path.join(LOCAL_DATA_DIR, "processed")]:
         if os.path.exists(candidate) and glob.glob(os.path.join(candidate, "*_training_data.parquet")):
             processed_dir = candidate
             break
 
     if processed_dir is None:
         print("\n[ERROR] No training_data.parquet files found.")
-        print("  Tried:")
-        print(f"    {REPO_TRAINING_DIR}  (repo training_data/ — should be here after git clone)")
-        print(f"    {DRIVE_PROCESSED_DIR}  (Google Drive fallback)")
-        print("\n  Make sure you ran:  !git clone https://github.com/haitham-kh/crypto-oracle-mcp.git")
+        print(f"  Checked: {REPO_TRAINING_DIR}")
+        print(f"  Checked: {DRIVE_PROCESSED_DIR}")
+        print("  Make sure you ran:  !git clone https://github.com/haitham-kh/crypto-oracle-mcp.git")
         return
 
-    print(f"\n[DATA] Processed dir: {processed_dir}")
     tp_files = glob.glob(os.path.join(processed_dir, "*_training_data.parquet"))
-    print(f"  Found {len(tp_files)} training_data.parquet files")
+    print(f"\n[DATA] {processed_dir}  ({len(tp_files)} parquets)")
 
+    # Step 3: Load bundles
     bundles = []
     for sym in COINS:
         b = load_training_bundle(sym, processed_dir, ohlcv_dir)
@@ -677,9 +687,9 @@ def main():
         gc.collect()
 
     if not bundles:
-        print("[ERROR] No bundles loaded — check paths above."); return
+        print("[ERROR] No bundles loaded."); return
 
-    # ── Step 3: Stack ─────────────────────────────────────────────────────
+    # Step 4: Stack all coins
     X_full  = np.vstack([b["X_v6_full"]  for b in bundles])
     X_micro = np.vstack([b["X_v6_only"]  for b in bundles])
     v6_str  = np.concatenate([b["v6_strength"] for b in bundles])
@@ -699,16 +709,16 @@ def main():
 
     def _fmt(ms): return datetime.datetime.utcfromtimestamp(ms/1000).strftime("%Y-%m-%d")
     symbols_used = [b["symbol"] for b in bundles]
-    print(f"\nTotal: {N:,} samples × {X_full.shape[1]} features")
-    print(f"  train : {tr_end:,}  {_fmt(ts_all[0])} → {_fmt(ts_all[tr_end-1])}")
-    print(f"  val   : {va_end-tr_end:,}  {_fmt(ts_all[tr_end])} → {_fmt(ts_all[va_end-1])}")
-    print(f"  test  : {N-va_end:,}  {_fmt(ts_all[va_end])} → {_fmt(ts_all[-1])}")
+    print(f"\nTotal: {N:,} samples x {X_full.shape[1]} features")
+    print(f"  train : {tr_end:,}  {_fmt(ts_all[0])} -> {_fmt(ts_all[tr_end-1])}")
+    print(f"  val   : {va_end-tr_end:,}  {_fmt(ts_all[tr_end])} -> {_fmt(ts_all[va_end-1])}")
+    print(f"  test  : {N-va_end:,}  {_fmt(ts_all[va_end])} -> {_fmt(ts_all[-1])}")
 
-    anchor_ts = float(ts_all.max())
+    anchor_ts   = float(ts_all.max())
     full_names  = [f"X{i}" for i in range(X_full.shape[1])]
     micro_names = [f"V{i}" for i in range(N_V6_EXTRA)]
 
-    # ── Step 4: Train models ──────────────────────────────────────────────
+    # Step 5: Train
     os.makedirs(DRIVE_MODELS_DIR, exist_ok=True)
     horizon_results = {}
 
@@ -720,7 +730,6 @@ def main():
             net_arr = per_h[f"net_{h}"] if direction=="long" else per_h[f"net_short_{h}"]
             direction_results = {}
 
-            # V6_full (130 features)
             r_full = train_horizon(
                 h, direction,
                 X_full[sl_tr], ts_all[sl_tr], y_arr[sl_tr], net_arr[sl_tr],
@@ -731,7 +740,6 @@ def main():
             )
             if r_full: direction_results["full"] = r_full
 
-            # V6_micro (36 features)
             if not SKIP_MICRO_MODEL:
                 r_micro = train_horizon(
                     h, direction,
@@ -745,7 +753,7 @@ def main():
 
             horizon_results[str(h)][direction] = direction_results
 
-    # ── Step 5: Summary & Meta ───────────────────────────────────────────
+    # Step 6: Summary
     print("\n" + "="*80)
     print("  TRAINING SUMMARY")
     print("="*80)
@@ -775,27 +783,20 @@ def main():
     }
     meta_path = os.path.join(DRIVE_MODELS_DIR, "v6_meta.json")
     with open(meta_path, "w") as fp: json.dump(meta, fp, indent=2)
-    print(f"\n[OK] Meta saved → {meta_path}")
-    print(f"     Models dir  → {DRIVE_MODELS_DIR}")
-    print(f"     Total time  → {(time.time()-t0)/60:.1f} min")
+    print(f"\n[OK] Models saved -> {DRIVE_MODELS_DIR}")
+    print(f"     Total time  -> {(time.time()-t0)/60:.1f} min")
     print()
     print("NEXT STEPS:")
-    print("  1. Download everything from Google Drive:")
-    print(f"     {DRIVE_MODELS_DIR}/")
-    print("  2. Copy ALL files to your PC:")
-    print("     c:\\\\Users\\\\skuna\\\\cryptogame\\\\crypto-oracle-mcp\\\\data\\\\")
-    print("  3. Restart the live engine:")
-    print("     python live_demo_engine.py")
-    print("     (it will auto-detect V6 and activate 70/30 blending)")
+    print("  1. Download MyDrive/crypto_oracle/models_v6/ from Google Drive")
+    print("  2. Copy all files into:  crypto-oracle-mcp/data/")
+    print("  3. Run:  python live_demo_engine.py")
 
 if __name__ == "__main__":
     main()
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Run automatically when pasted into a Colab cell
-# ─────────────────────────────────────────────────────────────────────────────
+# Auto-run when pasted directly into a Colab cell
 try:
-    get_ipython  # only exists inside Jupyter/Colab
+    get_ipython  # only exists in Jupyter/Colab
     main()
 except NameError:
-    pass  # running as a script, main() called via __main__ above
+    pass
